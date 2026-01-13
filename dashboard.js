@@ -66,7 +66,7 @@ function handleAddTime(e) {
         track,
         lapTime,
         date,
-        timestamp: new Date().getTime()
+        timestamp: Date.now()
     };
 
     // Get existing times
