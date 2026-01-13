@@ -100,15 +100,15 @@ function loadRacingTimes() {
     // Sort by date (newest first)
     racingTimes.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    tableBody.innerHTML = racingTimes.map((time, index) => `
+    tableBody.innerHTML = racingTimes.map((time) => `
         <tr>
             <td>${escapeHtml(time.racerName)}</td>
             <td>${escapeHtml(time.track)}</td>
             <td>${time.lapTime.toFixed(3)}</td>
             <td>${formatDate(time.date)}</td>
             <td>
-                <button class="action-btn edit-btn" onclick="editTime(${index})">Edit</button>
-                <button class="action-btn delete-btn" onclick="deleteTime(${index})">Delete</button>
+                <button class="action-btn edit-btn" onclick="editTime(${time.timestamp})">Edit</button>
+                <button class="action-btn delete-btn" onclick="deleteTime(${time.timestamp})">Delete</button>
             </td>
         </tr>
     `).join('');
@@ -125,13 +125,14 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function editTime(index) {
+function editTime(timestamp) {
     const racingTimes = getRacingTimes();
-    racingTimes.sort((a, b) => new Date(b.date) - new Date(a.date));
-    const time = racingTimes[index];
+    const time = racingTimes.find(t => t.timestamp === timestamp);
+    
+    if (!time) return;
 
     // Populate edit form
-    document.getElementById('editIndex').value = index;
+    document.getElementById('editIndex').value = timestamp;
     document.getElementById('editRacerName').value = time.racerName;
     document.getElementById('editTrack').value = time.track;
     document.getElementById('editLapTime').value = time.lapTime;
@@ -144,39 +145,39 @@ function editTime(index) {
 function handleEditTime(e) {
     e.preventDefault();
 
-    const index = parseInt(document.getElementById('editIndex').value);
+    const timestamp = parseInt(document.getElementById('editIndex').value);
     const racingTimes = getRacingTimes();
     
-    // Sort to match the display order
-    racingTimes.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Find and update the time by timestamp
+    const index = racingTimes.findIndex(t => t.timestamp === timestamp);
+    
+    if (index !== -1) {
+        racingTimes[index] = {
+            racerName: document.getElementById('editRacerName').value,
+            track: document.getElementById('editTrack').value,
+            lapTime: parseFloat(document.getElementById('editLapTime').value),
+            date: document.getElementById('editDate').value,
+            timestamp: timestamp
+        };
 
-    // Update the time
-    racingTimes[index] = {
-        racerName: document.getElementById('editRacerName').value,
-        track: document.getElementById('editTrack').value,
-        lapTime: parseFloat(document.getElementById('editLapTime').value),
-        date: document.getElementById('editDate').value,
-        timestamp: racingTimes[index].timestamp
-    };
-
-    // Save back to localStorage
-    localStorage.setItem('racingTimes', JSON.stringify(racingTimes));
+        // Save back to localStorage
+        localStorage.setItem('racingTimes', JSON.stringify(racingTimes));
+    }
 
     // Close modal and reload
     document.getElementById('editModal').style.display = 'none';
     loadRacingTimes();
 }
 
-function deleteTime(index) {
+function deleteTime(timestamp) {
     if (confirm('Are you sure you want to delete this racing time?')) {
         const racingTimes = getRacingTimes();
-        racingTimes.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        // Remove the time
-        racingTimes.splice(index, 1);
+        // Remove the time by timestamp
+        const filteredTimes = racingTimes.filter(t => t.timestamp !== timestamp);
         
         // Save back to localStorage
-        localStorage.setItem('racingTimes', JSON.stringify(racingTimes));
+        localStorage.setItem('racingTimes', JSON.stringify(filteredTimes));
         
         // Reload the table
         loadRacingTimes();
