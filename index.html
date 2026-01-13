@@ -3,67 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RacingTider</title>
+    <title>Banetider</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      #main-content {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div class="container mt-5">
-      <h1 class="mb-4">RacingTider</h1>
-
-      <div class="card mb-4 p-3">
-        <h3>Register</h3>
-        <input id="rUser" class="form-control mb-2" placeholder="brukernavn" />
-        <input
-          id="rPass"
-          class="form-control mb-2"
-          type="password"
-          placeholder="passord"
-        />
-        <button class="btn btn-primary" onclick="register()">Register</button>
-      </div>
-
-      <div class="card mb-4 p-3">
-        <h3>Login</h3>
-        <input id="lUser" class="form-control mb-2" placeholder="brukernavn" />
+      <!-- Login/Registration -->
+      <div id="auth" class="card p-4 mb-4">
+        <h2>Login</h2>
+        <input id="lUser" class="form-control mb-2" placeholder="Brukernavn" />
         <input
           id="lPass"
           class="form-control mb-2"
           type="password"
-          placeholder="passord"
+          placeholder="Passord"
         />
-        <button class="btn btn-success" onclick="login()">Login</button>
+        <button class="btn btn-success mb-3" onclick="login()">Login</button>
+
+        <h2>Register</h2>
+        <input id="rUser" class="form-control mb-2" placeholder="Brukernavn" />
+        <input
+          id="rPass"
+          class="form-control mb-2"
+          type="password"
+          placeholder="Passord"
+        />
+        <input id="rEmail" class="form-control mb-2" placeholder="Epost" />
+        <button class="btn btn-primary" onclick="register()">Register</button>
       </div>
 
-      <div class="card mb-4 p-3">
-        <h3>Racingtid</h3>
-        <input id="time" class="form-control mb-2" placeholder="sekunder" />
-        <button class="btn btn-warning" onclick="saveTime()">Lagre tid</button>
-        <h4 class="mt-3">Dine tider</h4>
-        <ul id="times" class="list-group mt-2"></ul>
+      <!-- Main Content -->
+      <div id="main-content">
+        <h2>Banetider</h2>
+
+        <div class="card mb-3 p-3">
+          <label for="trackSelect">Velg bane:</label>
+          <select id="trackSelect" class="form-select mb-2"></select>
+
+          <input
+            id="timeInput"
+            class="form-control mb-2"
+            placeholder="Tid i sekunder"
+          />
+          <button class="btn btn-warning mb-2" onclick="saveTime()">
+            Lagre tid
+          </button>
+
+          <h4>Dine tider</h4>
+          <ul id="timesList" class="list-group mt-2"></ul>
+        </div>
+
+        <button class="btn btn-danger" onclick="logout()">Logg ut</button>
       </div>
     </div>
 
     <script>
       let currentUser = null;
 
+      // Pre-lagde baner for testing (Tracks)
+      let tracks = [
+        { id: 1, track_name: "Bane 1" },
+        { id: 2, track_name: "Bane 2" },
+        { id: 3, track_name: "Bane 3" },
+      ];
+
+      // Load tracks i select
+      function loadTracks() {
+        const sel = document.getElementById("trackSelect");
+        sel.innerHTML = "";
+        tracks.forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.track_name;
+          sel.appendChild(opt);
+        });
+      }
+
       // Register
       function register() {
         const u = document.getElementById("rUser").value;
         const p = document.getElementById("rPass").value;
-        if (!u || !p) return alert("Fyll inn begge felt wallah");
+        const e = document.getElementById("rEmail").value;
+        if (!u || !p || !e) return alert("Fyll inn alle feltene wallah");
 
         const users = JSON.parse(localStorage.getItem("users") || "{}");
         if (users[u]) return alert("Brukernavn eksisterer wallah");
 
-        users[u] = { password: p, times: [] };
+        users[u] = { password: p, email: e, times: [] };
         localStorage.setItem("users", JSON.stringify(users));
-        alert("Bruker lagret wallah");
+        alert("Bruker registrert wallah");
         document.getElementById("rUser").value = "";
         document.getElementById("rPass").value = "";
+        document.getElementById("rEmail").value = "";
       }
 
       // Login
@@ -73,37 +113,63 @@
         const users = JSON.parse(localStorage.getItem("users") || "{}");
         if (users[u] && users[u].password === p) {
           currentUser = u;
-          alert("Login ok wallah");
+          document.getElementById("auth").style.display = "none";
+          document.getElementById("main-content").style.display = "block";
+          loadTracks();
           loadTimes();
+          alert("Login ok wallah");
         } else alert("Feil brukernavn/passord");
       }
 
-      // Save racingtid
+      // Logout
+      function logout() {
+        currentUser = null;
+        document.getElementById("auth").style.display = "block";
+        document.getElementById("main-content").style.display = "none";
+      }
+
+      // Save time
       function saveTime() {
         if (!currentUser) return alert("Login først wallah");
-        const t = parseFloat(document.getElementById("time").value);
+        const t = parseFloat(document.getElementById("timeInput").value);
+        const trackId = parseInt(document.getElementById("trackSelect").value);
         if (isNaN(t)) return alert("Skriv inn gyldig tid wallah");
 
         const users = JSON.parse(localStorage.getItem("users"));
-        users[currentUser].times.push(t);
+        users[currentUser].times.push({
+          track_id: trackId,
+          time: t,
+          created_at: new Date().toISOString(),
+        });
         localStorage.setItem("users", JSON.stringify(users));
-        document.getElementById("time").value = "";
+        document.getElementById("timeInput").value = "";
         loadTimes();
       }
 
-      // Load tider
+      // Load times for selected track
       function loadTimes() {
         if (!currentUser) return;
+        const trackId = parseInt(document.getElementById("trackSelect").value);
         const users = JSON.parse(localStorage.getItem("users"));
-        const list = document.getElementById("times");
+        const list = document.getElementById("timesList");
         list.innerHTML = "";
-        users[currentUser].times.forEach((t, i) => {
-          const li = document.createElement("li");
-          li.className = "list-group-item";
-          li.textContent = `${i + 1}. ${t} sek`;
-          list.appendChild(li);
-        });
+
+        users[currentUser].times
+          .filter((t) => t.track_id === trackId)
+          .forEach((t, i) => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.textContent = `${i + 1}. ${t.time} sek (${new Date(
+              t.created_at
+            ).toLocaleString()})`;
+            list.appendChild(li);
+          });
       }
+
+      // Reload tider når man bytter bane
+      document
+        .getElementById("trackSelect")
+        .addEventListener("change", loadTimes);
     </script>
   </body>
 </html>
