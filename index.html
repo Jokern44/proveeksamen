@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RacingTider</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="mb-4">RacingTider</h1>
+
+      <div class="card mb-4 p-3">
+        <h3>Register</h3>
+        <input id="rUser" class="form-control mb-2" placeholder="brukernavn" />
+        <input
+          id="rPass"
+          class="form-control mb-2"
+          type="password"
+          placeholder="passord"
+        />
+        <button class="btn btn-primary" onclick="register()">Register</button>
+      </div>
+
+      <div class="card mb-4 p-3">
+        <h3>Login</h3>
+        <input id="lUser" class="form-control mb-2" placeholder="brukernavn" />
+        <input
+          id="lPass"
+          class="form-control mb-2"
+          type="password"
+          placeholder="passord"
+        />
+        <button class="btn btn-success" onclick="login()">Login</button>
+      </div>
+
+      <div class="card mb-4 p-3">
+        <h3>Racingtid</h3>
+        <input id="time" class="form-control mb-2" placeholder="sekunder" />
+        <button class="btn btn-warning" onclick="saveTime()">Lagre tid</button>
+        <h4 class="mt-3">Dine tider</h4>
+        <ul id="times" class="list-group mt-2"></ul>
+      </div>
+    </div>
+
+    <script>
+      let currentUser = null;
+
+      // Register
+      function register() {
+        const u = document.getElementById("rUser").value;
+        const p = document.getElementById("rPass").value;
+        if (!u || !p) return alert("Fyll inn begge felt wallah");
+
+        const users = JSON.parse(localStorage.getItem("users") || "{}");
+        if (users[u]) return alert("Brukernavn eksisterer wallah");
+
+        users[u] = { password: p, times: [] };
+        localStorage.setItem("users", JSON.stringify(users));
+        alert("Bruker lagret wallah");
+        document.getElementById("rUser").value = "";
+        document.getElementById("rPass").value = "";
+      }
+
+      // Login
+      function login() {
+        const u = document.getElementById("lUser").value;
+        const p = document.getElementById("lPass").value;
+        const users = JSON.parse(localStorage.getItem("users") || "{}");
+        if (users[u] && users[u].password === p) {
+          currentUser = u;
+          alert("Login ok wallah");
+          loadTimes();
+        } else alert("Feil brukernavn/passord");
+      }
+
+      // Save racingtid
+      function saveTime() {
+        if (!currentUser) return alert("Login først wallah");
+        const t = parseFloat(document.getElementById("time").value);
+        if (isNaN(t)) return alert("Skriv inn gyldig tid wallah");
+
+        const users = JSON.parse(localStorage.getItem("users"));
+        users[currentUser].times.push(t);
+        localStorage.setItem("users", JSON.stringify(users));
+        document.getElementById("time").value = "";
+        loadTimes();
+      }
+
+      // Load tider
+      function loadTimes() {
+        if (!currentUser) return;
+        const users = JSON.parse(localStorage.getItem("users"));
+        const list = document.getElementById("times");
+        list.innerHTML = "";
+        users[currentUser].times.forEach((t, i) => {
+          const li = document.createElement("li");
+          li.className = "list-group-item";
+          li.textContent = `${i + 1}. ${t} sek`;
+          list.appendChild(li);
+        });
+      }
+    </script>
+  </body>
+</html>
