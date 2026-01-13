@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.onclick = function(event) {
-        if (event.target == modal) {
+        if (event.target === modal) {
             modal.style.display = 'none';
         }
     }
@@ -54,6 +54,12 @@ function handleAddTime(e) {
     const track = document.getElementById('track').value;
     const lapTime = parseFloat(document.getElementById('lapTime').value);
     const date = document.getElementById('date').value;
+
+    // Validate lap time
+    if (isNaN(lapTime) || lapTime <= 0) {
+        alert('Please enter a valid lap time (must be greater than 0)');
+        return;
+    }
 
     const newTime = {
         racerName,
@@ -81,7 +87,12 @@ function handleAddTime(e) {
 
 function getRacingTimes() {
     const times = localStorage.getItem('racingTimes');
-    return times ? JSON.parse(times) : [];
+    try {
+        return times ? JSON.parse(times) : [];
+    } catch (e) {
+        console.error('Failed to parse racing times:', e);
+        return [];
+    }
 }
 
 function loadRacingTimes() {
@@ -116,6 +127,9 @@ function loadRacingTimes() {
 
 function formatDate(dateString) {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+    }
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
@@ -146,6 +160,14 @@ function handleEditTime(e) {
     e.preventDefault();
 
     const timestamp = parseInt(document.getElementById('editIndex').value);
+    const lapTime = parseFloat(document.getElementById('editLapTime').value);
+    
+    // Validate lap time
+    if (isNaN(lapTime) || lapTime <= 0) {
+        alert('Please enter a valid lap time (must be greater than 0)');
+        return;
+    }
+    
     const racingTimes = getRacingTimes();
     
     // Find and update the time by timestamp
@@ -155,7 +177,7 @@ function handleEditTime(e) {
         racingTimes[index] = {
             racerName: document.getElementById('editRacerName').value,
             track: document.getElementById('editTrack').value,
-            lapTime: parseFloat(document.getElementById('editLapTime').value),
+            lapTime: lapTime,
             date: document.getElementById('editDate').value,
             timestamp: timestamp
         };
