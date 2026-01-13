@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Banetider Leaderboard</title>
+    <title>Banetider Supabase</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
       /* Overlay login */
       #loginOverlay {
@@ -39,35 +40,16 @@
         <h3 class="mb-3 text-center">Login / Register</h3>
 
         <div class="mb-3">
+          <input id="email" class="form-control mb-2" placeholder="Epost" />
           <input
-            id="lUser"
-            class="form-control mb-2"
-            placeholder="Brukernavn"
-          />
-          <input
-            id="lPass"
+            id="password"
             class="form-control mb-2"
             type="password"
             placeholder="Passord"
           />
-          <button class="btn btn-success w-100 mb-3" onclick="login()">
+          <button class="btn btn-success w-100 mb-2" onclick="login()">
             Login
           </button>
-        </div>
-
-        <div>
-          <input
-            id="rUser"
-            class="form-control mb-2"
-            placeholder="Brukernavn"
-          />
-          <input
-            id="rPass"
-            class="form-control mb-2"
-            type="password"
-            placeholder="Passord"
-          />
-          <input id="rEmail" class="form-control mb-2" placeholder="Epost" />
           <button class="btn btn-primary w-100" onclick="register()">
             Register
           </button>
@@ -76,7 +58,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container mt-5" id="main-content">
+    <div class="container mt-5" id="main-content" style="display: none">
       <h1 class="mb-4">Banetider</h1>
 
       <div class="card mb-3 p-3">
@@ -103,139 +85,134 @@
     </div>
 
     <script>
+      // Supabase setup
+      const supabaseUrl = "https://mvnnwmgkjmhemchiduiq.supabase.co";
+      const supabaseKey =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
+      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
       let currentUser = null;
 
-      // Pre-lagde baner (Tracks)
-      let tracks = [
-        { id: 1, track_name: "Bane 1" },
-        { id: 2, track_name: "Bane 2" },
-        { id: 3, track_name: "Bane 3" },
-      ];
-
-      // Load tracks i select
-      function loadTracks() {
-        const sel = document.getElementById("trackSelect");
-        sel.innerHTML = "";
-        tracks.forEach((t) => {
-          const opt = document.createElement("option");
-          opt.value = t.id;
-          opt.textContent = t.track_name;
-          sel.appendChild(opt);
-        });
-      }
-
       // Register
-      function register() {
-        const u = document.getElementById("rUser").value;
-        const p = document.getElementById("rPass").value;
-        const e = document.getElementById("rEmail").value;
-        if (!u || !p || !e) return alert("Fyll inn alle feltene wallah");
+      async function register() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        if (!email || !password) return alert("Fyll inn wallah");
 
-        const users = JSON.parse(localStorage.getItem("users") || "{}");
-        if (users[u]) return alert("Brukernavn eksisterer wallah");
-
-        users[u] = { password: p, email: e, times: [] };
-        localStorage.setItem("users", JSON.stringify(users));
-        alert("Bruker registrert wallah");
-        document.getElementById("rUser").value = "";
-        document.getElementById("rPass").value = "";
-        document.getElementById("rEmail").value = "";
+        const { user, error } = await supabase.auth.signUp({ email, password });
+        if (error) return alert(error.message);
+        alert("Registrert! Sjekk epost for bekreftelse wallah");
       }
 
       // Login
-      function login() {
-        const u = document.getElementById("lUser").value;
-        const p = document.getElementById("lPass").value;
-        const users = JSON.parse(localStorage.getItem("users") || "{}");
-        if (users[u] && users[u].password === p) {
-          currentUser = u;
-          document.getElementById("loginOverlay").style.display = "none";
-          document.getElementById("main-content").style.display = "block";
-          loadTracks();
-          loadTimes();
-          loadLeaderboard();
-          alert("Login ok wallah");
-        } else alert("Feil brukernavn/passord");
+      async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        if (!email || !password) return alert("Fyll inn wallah");
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) return alert(error.message);
+        currentUser = data.user.id;
+
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+        loadTracks();
+        loadTimes();
+        loadLeaderboard();
       }
 
       // Logout
-      function logout() {
+      async function logout() {
+        await supabase.auth.signOut();
         currentUser = null;
         document.getElementById("loginOverlay").style.display = "flex";
         document.getElementById("main-content").style.display = "none";
       }
 
-      // Save time
-      function saveTime() {
-        if (!currentUser) return alert("Login først wallah");
+      // Load tracks from Supabase
+      async function loadTracks() {
+        let { data, error } = await supabase.from("Tracks").select("*");
+        if (error) return alert(error.message);
+
+        const sel = document.getElementById("trackSelect");
+        sel.innerHTML = "";
+        data.forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.track_name;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener("change", () => {
+          loadTimes();
+          loadLeaderboard();
+        });
+      }
+
+      // Save time to Supabase
+      async function saveTime() {
         const t = parseFloat(document.getElementById("timeInput").value);
         const trackId = parseInt(document.getElementById("trackSelect").value);
         if (isNaN(t)) return alert("Skriv inn gyldig tid wallah");
 
-        const users = JSON.parse(localStorage.getItem("users"));
-        users[currentUser].times.push({
-          track_id: trackId,
-          time: t,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem("users", JSON.stringify(users));
+        const { error } = await supabase
+          .from("Times")
+          .insert([{ user_id: currentUser, track_id: trackId, time: t }]);
+        if (error) return alert(error.message);
+
         document.getElementById("timeInput").value = "";
         loadTimes();
         loadLeaderboard();
       }
 
       // Load own times
-      function loadTimes() {
-        if (!currentUser) return;
+      async function loadTimes() {
         const trackId = parseInt(document.getElementById("trackSelect").value);
-        const users = JSON.parse(localStorage.getItem("users"));
+        let { data, error } = await supabase
+          .from("Times")
+          .select("*")
+          .eq("user_id", currentUser)
+          .eq("track_id", trackId)
+          .order("created_at", { ascending: true });
+
+        if (error) return alert(error.message);
+
         const list = document.getElementById("timesList");
         list.innerHTML = "";
-
-        users[currentUser].times
-          .filter((t) => t.track_id === trackId)
-          .forEach((t, i) => {
-            const li = document.createElement("li");
-            li.className = "list-group-item";
-            li.textContent = `${i + 1}. ${t.time} sek (${new Date(
-              t.created_at
-            ).toLocaleString()})`;
-            list.appendChild(li);
-          });
+        data.forEach((t, i) => {
+          const li = document.createElement("li");
+          li.className = "list-group-item";
+          li.textContent = `${i + 1}. ${t.time} sek (${new Date(
+            t.created_at
+          ).toLocaleString()})`;
+          list.appendChild(li);
+        });
       }
 
-      // Load leaderboard (top 5 for selected track)
-      function loadLeaderboard() {
+      // Load leaderboard top 5
+      async function loadLeaderboard() {
         const trackId = parseInt(document.getElementById("trackSelect").value);
-        const users = JSON.parse(localStorage.getItem("users"));
-        let allTimes = [];
+        let { data, error } = await supabase
+          .from("Times")
+          .select("time, user_id, Users(username)")
+          .eq("track_id", trackId)
+          .order("time", { ascending: true })
+          .limit(5)
+          .join("Users", "Users.id", "user_id");
 
-        Object.keys(users).forEach((u) => {
-          users[u].times
-            .filter((t) => t.track_id === trackId)
-            .forEach((t) => {
-              allTimes.push({ username: u, time: t.time });
-            });
-        });
-
-        allTimes.sort((a, b) => a.time - b.time);
-        const top5 = allTimes.slice(0, 5);
+        if (error) return alert(error.message);
 
         const lb = document.getElementById("leaderboard");
         lb.innerHTML = "";
-        top5.forEach((t, i) => {
+        data.forEach((t, i) => {
           const li = document.createElement("li");
           li.className = "list-group-item";
-          li.textContent = `${i + 1}. ${t.username}: ${t.time} sek`;
+          li.textContent = `${i + 1}. ${t.Users.username}: ${t.time} sek`;
           lb.appendChild(li);
         });
       }
-
-      // Reload times & leaderboard når man bytter bane
-      document.getElementById("trackSelect").addEventListener("change", () => {
-        loadTimes();
-        loadLeaderboard();
-      });
     </script>
   </body>
 </html>
