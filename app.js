@@ -158,8 +158,7 @@
         {
           user_id: currentUser.id,
           track_id: trackId,
-          time: timeInput_value,
-          time_seconds: totalSeconds,
+          time: totalSeconds,
         },
       ]);
       if (error) return console.error(error);
@@ -181,13 +180,22 @@
         .select("*")
         .eq("user_id", currentUser.id)
         .eq("track_id", trackId)
-        .order("created_at", { ascending: true });
+        .order("time", { ascending: true });
 
       timesList.innerHTML = "";
       (data || []).forEach((t, i) => {
         const li = document.createElement("li");
         li.className = "list-group-item";
-        li.textContent = `${i + 1}. ${t.time || t.time_seconds + " sek"}`;
+        // Format sekunder til MM:SS.MS
+        const totalSec = t.time;
+        const minutes = Math.floor(totalSec / 60);
+        const seconds = Math.floor(totalSec % 60);
+        const centiseconds = Math.round((totalSec % 1) * 100);
+        const formatted = `${minutes}:${String(seconds).padStart(
+          2,
+          "0"
+        )}.${String(centiseconds).padStart(2, "0")}`;
+        li.textContent = `${i + 1}. ${formatted}`;
         timesList.appendChild(li);
       });
       if ((data || []).length === 0)
@@ -203,9 +211,9 @@
 
       const { data, error } = await window.supabaseClient
         .from("Times")
-        .select("time, time_seconds, user_id")
+        .select("time, user_id")
         .eq("track_id", trackId)
-        .order("time_seconds", { ascending: true })
+        .order("time", { ascending: true })
         .limit(5);
 
       leaderboard.innerHTML = "";
@@ -215,7 +223,7 @@
         return;
       }
 
-      // Hent brukernamn for kvar tid
+      // Hent brukernamn for hver tid
       for (let i = 0; i < data.length; i++) {
         const t = data[i];
         try {
@@ -223,11 +231,19 @@
             await window.supabaseClient.auth.admin.getUserById(t.user_id);
           const username = userData?.user?.user_metadata?.username || "Ukjent";
 
+          // Format sekunder til MM:SS.MS
+          const totalSec = t.time;
+          const minutes = Math.floor(totalSec / 60);
+          const seconds = Math.floor(totalSec % 60);
+          const centiseconds = Math.round((totalSec % 1) * 100);
+          const formatted = `${minutes}:${String(seconds).padStart(
+            2,
+            "0"
+          )}.${String(centiseconds).padStart(2, "0")}`;
+
           const li = document.createElement("li");
           li.className = "list-group-item";
-          li.textContent = `${i + 1}. ${
-            t.time || t.time_seconds + " sek"
-          } — ${username}`;
+          li.textContent = `${i + 1}. ${formatted} — ${username}`;
           leaderboard.appendChild(li);
         } catch (e) {
           console.error("Error fetching user:", e);
