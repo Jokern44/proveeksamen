@@ -85,6 +85,8 @@
 
     async function login() {
       console.log("Login clicked");
+      console.log("window.supabaseClient in login:", window.supabaseClient);
+      console.log("window.supabaseClient?.auth:", window.supabaseClient?.auth);
       clearMsg();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
