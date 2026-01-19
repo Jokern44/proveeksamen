@@ -34,6 +34,7 @@
     const timesList = document.getElementById("timesList");
     const leaderboard = document.getElementById("leaderboard");
     const standings = document.getElementById("standings");
+    const fastestLapCheckbox = document.getElementById("fastestLap");
 
     // Admin elements
     const adminSection = document.getElementById("adminSection");
@@ -52,6 +53,16 @@
     let currentUser = null;
     let isAdmin = false;
 
+    // Fjern eventuell gammel "raskeste runde"-checkbox som kan henge igjen i cache
+    if (fastestLapCheckbox) {
+      const wrapper = fastestLapCheckbox.closest(".form-check");
+      if (wrapper) {
+        wrapper.remove();
+      } else {
+        fastestLapCheckbox.remove();
+      }
+    }
+
     function showMsg(msg, isError = true) {
       authMsg.style.color = isError ? "red" : "green";
       authMsg.textContent = msg;
@@ -67,6 +78,7 @@
     async function register() {
       console.log("Register clicked");
       clearMsg();
+
       const username = usernameEl.value.trim();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
