@@ -4,14 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Banetider Supabase</title>
-
-    <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-
-    <!-- Riktig Supabase UMD -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <style>
@@ -30,7 +26,6 @@
     </style>
   </head>
   <body>
-    <!-- LOGIN -->
     <div id="loginOverlay">
       <div id="loginCard" class="card p-4">
         <h4 class="text-center mb-3">Login / Register</h4>
@@ -53,14 +48,11 @@
       </div>
     </div>
 
-    <!-- MAIN -->
     <div class="container mt-5" id="main" style="display: none">
       <h2>Banetider</h2>
-
       <div class="card p-3 mb-3">
         <label for="trackSelect">Velg bane</label>
         <select id="trackSelect" class="form-select mb-2"></select>
-
         <input
           id="timeInput"
           class="form-control mb-2"
@@ -79,7 +71,6 @@
     </div>
 
     <script>
-      // ---------- KONFIG ----------
       const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
@@ -89,7 +80,6 @@
         SUPABASE_ANON_KEY
       );
 
-      // ---------- DOM ----------
       const loginOverlay = document.getElementById("loginOverlay");
       const main = document.getElementById("main");
       const emailEl = document.getElementById("email");
@@ -108,58 +98,58 @@
 
       let currentUser = null;
 
-      // ---------- HELPERS ----------
-      function showAuthMessage(msg, isError = true) {
+      function showMsg(msg, isError = true) {
         authMsg.style.color = isError ? "red" : "green";
         authMsg.textContent = msg;
       }
-      function clearAuthMessage() {
+      function clearMsg() {
         authMsg.textContent = "";
       }
+      function showMain() {
+        loginOverlay.style.display = "none";
+        main.style.display = "block";
+      }
 
-      // ---------- AUTH ----------
       async function register() {
-        clearAuthMessage();
+        clearMsg();
         const email = emailEl.value.trim();
         const password = passwordEl.value;
         if (!email || !password)
-          return showAuthMessage("Fyll inn epost og passord wallah");
+          return showMsg("Fyll inn epost og passord wallah");
 
         try {
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
           });
-          if (error)
-            return showAuthMessage("Register feilet: " + error.message);
-          showAuthMessage("Registrert! Sjekk epost wallah", false);
+          if (error) return showMsg("Register feilet: " + error.message);
+          showMsg("Registrert! Sjekk epost wallah", false);
         } catch (e) {
           console.error(e);
-          showAuthMessage("Register exception, se console");
+          showMsg("Register exception, se console");
         }
       }
 
       async function login() {
-        clearAuthMessage();
+        clearMsg();
         const email = emailEl.value.trim();
         const password = passwordEl.value;
         if (!email || !password)
-          return showAuthMessage("Fyll inn epost og passord wallah");
+          return showMsg("Fyll inn epost og passord wallah");
 
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
-          if (error) return showAuthMessage("Login feilet: " + error.message);
-
+          if (error) return showMsg("Login feilet: " + error.message);
           currentUser = data.user;
-          if (currentUser) showMainUI();
+          if (currentUser) showMain();
           loadTracks();
-          showAuthMessage("Innlogget!", false);
+          showMsg("Innlogget!", false);
         } catch (e) {
           console.error(e);
-          showAuthMessage("Login exception, se console");
+          showMsg("Login exception, se console");
         }
       }
 
@@ -168,7 +158,6 @@
         location.reload();
       }
 
-      // ---------- DATA ----------
       async function loadTracks() {
         const { data, error } = await supabase
           .from("Tracks")
@@ -193,14 +182,9 @@
         if (isNaN(time) || !trackId)
           return alert("Skriv gyldig tid og velg bane");
 
-        const { data, error } = await supabase.from("Times").insert([
-          {
-            user_id: currentUser.id,
-            track_id: trackId,
-            time: time,
-          },
-        ]);
-
+        const { data, error } = await supabase
+          .from("Times")
+          .insert([{ user_id: currentUser.id, track_id: trackId, time: time }]);
         if (error) return console.error(error);
         timeInput.value = "";
         loadTimes();
@@ -257,12 +241,6 @@
         if ((data || []).length === 0)
           leaderboard.innerHTML =
             "<li class='list-group-item'>Ingen tider</li>";
-      }
-
-      // ---------- UI ----------
-      function showMainUI() {
-        loginOverlay.style.display = "none";
-        main.style.display = "block";
       }
 
       btnRegister.addEventListener("click", register);
