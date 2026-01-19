@@ -362,7 +362,6 @@
       if (!currentUser) return alert("Ikke innlogget");
       const raceId = Number(raceSelect.value);
       const timeInput_value = timeInput.value.trim();
-      const fastestLap = fastestLapInput.checked;
 
       if (!raceId) return alert("Velg løp");
 
@@ -409,7 +408,7 @@
           track_id: trackId,
           time: totalSeconds,
           username: username,
-          fastest_lap: fastestLap,
+          fastest_lap: false,
           placement: null,
           handicap_kg: null,
           points: null,
@@ -451,12 +450,16 @@
       const handicapMap = { 1: 20, 2: 10, 3: 5 };
       const pointsMap = { 1: 15, 2: 13, 3: 11, 4: 10 };
 
+      // Finn raskeste tid for løpet (kan være delt)
+      const fastestTime = data.length ? data[0].time : null;
+
       for (let i = 0; i < data.length; i++) {
         const time = data[i];
         const placement = i + 1;
         const handicap = handicapMap[placement] || 0;
+        const isFastest = fastestTime !== null && time.time === fastestTime;
         let points = pointsMap[placement] || 0;
-        if (time.fastest_lap) points += 1;
+        if (isFastest) points += 1; // Ekstrapoeng for raskeste runde
 
         // Oppdater i databasen
         await window.supabaseClient
@@ -465,6 +468,7 @@
             placement: placement,
             handicap_kg: handicap,
             points: points,
+            fastest_lap: isFastest,
           })
           .eq("id", time.id);
       }
