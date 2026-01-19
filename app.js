@@ -16,9 +16,24 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     console.log("DOMContentLoaded fired");
+    console.log("window.supabase:", window.supabase);
+
+    // Initialize supabase only once
+    if (!window.supabaseClient) {
+      if (!window.supabase) {
+        console.error("Supabase library not loaded!");
+        return;
+      }
+      window.supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+      console.log("Supabase client initialized:", window.supabaseClient);
+    }
 
     const loginOverlay = document.getElementById("loginOverlay");
     const main = document.getElementById("main");
+    const usernameEl = document.getElementById("username");
     const emailEl = document.getElementById("email");
     const passwordEl = document.getElementById("password");
     const authMsg = document.getElementById("authMsg");
@@ -57,18 +72,27 @@
     async function register() {
       console.log("Register clicked");
       clearMsg();
+      const username = usernameEl.value.trim();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
-      if (!email || !password)
-        return showMsg("Fyll inn epost og passord wallah");
+      if (!username || !email || !password)
+        return showMsg("Fyll inn brukernavn, epost og passord");
 
       try {
         const { data, error } = await window.supabaseClient.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              username: username,
+            },
+          },
         });
         if (error) return showMsg("Register feilet: " + error.message);
-        showMsg("Registrert! Sjekk epost wallah", false);
+        showMsg("Registrert! Sjekk epost for bekreftelse", false);
+        usernameEl.value = "";
+        emailEl.value = "";
+        passwordEl.value = "";
       } catch (e) {
         console.error(e);
         showMsg("Register exception, se console");
@@ -80,8 +104,7 @@
       clearMsg();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
-      if (!email || !password)
-        return showMsg("Fyll inn epost og passord wallah");
+      if (!email || !password) return showMsg("Fyll inn epost og passord");
 
       try {
         const { data, error } =
@@ -94,6 +117,9 @@
         if (currentUser) showMain();
         loadTracks();
         showMsg("Innlogget!", false);
+        usernameEl.value = "";
+        emailEl.value = "";
+        passwordEl.value = "";
       } catch (e) {
         console.error(e);
         showMsg("Login exception, se console");
@@ -124,14 +150,32 @@
 
     async function saveTime() {
       if (!currentUser) return alert("Ikke innlogget");
-      const time = parseFloat(timeInput.value);
+      const timeInput_value = timeInput.value.trim();
       const trackId = Number(trackSelect.value);
-      if (isNaN(time) || !trackId)
-        return alert("Skriv gyldig tid og velg bane");
 
-      const { data, error } = await window.supabaseClient
-        .from("Times")
-        .insert([{ user_id: currentUser.id, track_id: trackId, time }]);
+      // Parse rundetid fra format MM:SS.MS til sekund
+      const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{2})$/;
+      const match = timeInput_value.match(timeRegex);
+
+      if (!match || !trackId) {
+        return alert(
+          "Skriv gyldig rundetid i format MM:SS.MS (f.eks. 1:23.45)"
+        );
+      }
+
+      const minutes = parseInt(match[1]);
+      const seconds = parseInt(match[2]);
+      const centiseconds = parseInt(match[3]);
+      const totalSeconds = minutes * 60 + seconds + centiseconds / 100;
+
+      const { data, error } = await window.supabaseClient.from("Times").insert([
+        {
+          user_id: currentUser.id,
+          track_id: trackId,
+          time: timeInput_value,
+          time_seconds: totalSeconds,
+        },
+      ]);
       if (error) return console.error(error);
       timeInput.value = "";
       loadTimes();
@@ -157,7 +201,7 @@
       (data || []).forEach((t, i) => {
         const li = document.createElement("li");
         li.className = "list-group-item";
-        li.textContent = `${i + 1}. ${t.time} sek`;
+        li.textContent = `${i + 1}. ${t.time || t.time_seconds + " sek"}`;
         timesList.appendChild(li);
       });
       if ((data || []).length === 0)
@@ -173,20 +217,36 @@
 
       const { data, error } = await window.supabaseClient
         .from("Times")
-        .select("time, user_id")
+        .select("time, time_seconds, user_id")
         .eq("track_id", trackId)
-        .order("time", { ascending: true })
+        .order("time_seconds", { ascending: true })
         .limit(5);
 
       leaderboard.innerHTML = "";
-      (data || []).forEach((t, i) => {
-        const li = document.createElement("li");
-        li.className = "list-group-item";
-        li.textContent = `${i + 1}. ${t.time} sek — bruker: ${t.user_id}`;
-        leaderboard.appendChild(li);
-      });
-      if ((data || []).length === 0)
+
+      if ((data || []).length === 0) {
         leaderboard.innerHTML = "<li class='list-group-item'>Ingen tider</li>";
+        return;
+      }
+
+      // Hent brukernamn for kvar tid
+      for (let i = 0; i < data.length; i++) {
+        const t = data[i];
+        try {
+          const { data: userData } =
+            await window.supabaseClient.auth.admin.getUserById(t.user_id);
+          const username = userData?.user?.user_metadata?.username || "Ukjent";
+
+          const li = document.createElement("li");
+          li.className = "list-group-item";
+          li.textContent = `${i + 1}. ${
+            t.time || t.time_seconds + " sek"
+          } — ${username}`;
+          leaderboard.appendChild(li);
+        } catch (e) {
+          console.error("Error fetching user:", e);
+        }
+      }
     }
 
     btnRegister.addEventListener("click", register);

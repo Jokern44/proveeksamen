@@ -33,6 +33,12 @@
       <div id="loginCard" class="card p-4">
         <h4 class="text-center mb-3">Login / Register</h4>
         <input
+          id="username"
+          class="form-control mb-2"
+          placeholder="Brukernavn"
+          autocomplete="username"
+        />
+        <input
           id="email"
           class="form-control mb-2"
           placeholder="Epost"
@@ -63,11 +69,18 @@
       <div class="card p-3 mb-3">
         <label for="trackSelect">Velg bane</label>
         <select id="trackSelect" class="form-select mb-2"></select>
-        <input
-          id="timeInput"
-          class="form-control mb-2"
-          placeholder="Tid i sekunder"
-        />
+        <div class="mb-2">
+          <label for="timeInput">Rundetid</label>
+          <small class="d-block text-muted mb-2"
+            >Format: MM:SS.MS (f.eks. 1:23.45 eller 0:05.32)</small
+          >
+          <input
+            id="timeInput"
+            class="form-control"
+            placeholder="MM:SS.MS"
+            pattern="^\d{1,2}:\d{2}\.\d{2}$"
+          />
+        </div>
         <button id="btnSave" class="btn btn-warning">Lagre tid</button>
       </div>
 
