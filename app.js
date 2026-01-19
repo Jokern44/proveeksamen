@@ -274,6 +274,7 @@
       if (!gpId) {
         raceSelect.innerHTML = '<option value="">Velg sesong først</option>';
         raceDescSection.style.display = "none";
+        loadStandings();
         return;
       }
 
@@ -298,6 +299,9 @@
         o.dataset.trackId = r.track_id;
         raceSelect.appendChild(o);
       });
+
+      // Oppdater sammenlagt når sesong skifter
+      loadStandings();
     }
 
     async function showRaceDescription() {
@@ -590,43 +594,54 @@
         }
 
         const fastestTag = t.fastest_lap ? " 🏁" : "";
-        const handicapText = t.handicap_kg > 0 ? `${t.handicap_kg}kg, ` : "";
+        const handicapText = `+${t.handicap_kg || 0}kg`;
         const li = document.createElement("li");
         li.className = "list-group-item";
         li.textContent = `${i + 1}. ${
           t.username
-        } — ${formatted}${diffText} (${handicapText}${t.points}p)${fastestTag}`;
+        } — ${formatted}${diffText} | handicap ${handicapText} | ${
+          t.points
+        }p${fastestTag}`;
         leaderboard.appendChild(li);
       });
     }
 
     async function loadStandings() {
       // Hent alle tider med poeng
-      const { data, error } = await window.supabaseClient
-        .from("Times")
-        .select("username, points");
-
-      if (error) {
-        console.error("Error loading standings:", error);
+      const seasonId = Number(seasonSelect.value);
+      standings.innerHTML = "";
+      if (!seasonId) {
+        standings.innerHTML = "<li class='list-group-item'>Velg sesong</li>";
         return;
       }
 
-      // Grupper og summer poeng per bruker
-      const userPoints = {};
+      const { data, error } = await window.supabaseClient
+        .from("Times")
+        .select("username, points, handicap_kg, Races!inner(grandprix_id)")
+        .eq("Races.grandprix_id", seasonId);
+
+      if (error) {
+        console.error("Error loading standings:", error);
+        standings.innerHTML =
+          "<li class='list-group-item'>Feil ved henting</li>";
+        return;
+      }
+
+      // Grupper og summer poeng og handicap per bruker i valgt sesong
+      const userTotals = {};
       (data || []).forEach((t) => {
         const name = t.username || "Ukjent";
-        if (!userPoints[name]) {
-          userPoints[name] = 0;
+        if (!userTotals[name]) {
+          userTotals[name] = { points: 0, handicapKg: 0 };
         }
-        userPoints[name] += t.points || 0;
+        userTotals[name].points += t.points || 0;
+        userTotals[name].handicapKg += t.handicap_kg || 0;
       });
 
-      // Konverter til array og sorter
-      const sorted = Object.entries(userPoints)
-        .map(([username, points]) => ({ username, points }))
+      const sorted = Object.entries(userTotals)
+        .map(([username, totals]) => ({ username, ...totals }))
         .sort((a, b) => b.points - a.points);
 
-      standings.innerHTML = "";
       if (sorted.length === 0) {
         standings.innerHTML = "<li class='list-group-item'>Ingen data</li>";
         return;
@@ -635,7 +650,9 @@
       sorted.forEach((u, i) => {
         const li = document.createElement("li");
         li.className = "list-group-item";
-        li.textContent = `${i + 1}. ${u.username} — ${u.points} poeng`;
+        li.textContent = `${i + 1}. ${u.username} — ${u.points} p, ${
+          u.handicapKg
+        } kg totalt`;
         standings.appendChild(li);
       });
     }
