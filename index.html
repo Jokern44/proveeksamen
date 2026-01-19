@@ -25,6 +25,9 @@
     </script>
 
     <style>
+      body {
+        padding-bottom: 48px;
+      }
       #loginOverlay {
         position: fixed;
         inset: 0;
@@ -169,12 +172,7 @@
           placeholder="MM:SS.MS"
           pattern="^\d{1,2}:\d{2}\.\d{2}$"
         />
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" id="fastestLap" />
-          <label class="form-check-label" for="fastestLap">
-            Raskeste runde (+1 poeng)
-          </label>
-        </div>
+        <small class="text-muted">Raskeste runde settes automatisk.</small>
         <button id="btnSave" class="btn btn-warning">Lagre tid</button>
       </div>
 

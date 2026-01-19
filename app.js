@@ -31,7 +31,6 @@
     const adminSeasonSelect = document.getElementById("adminSeasonSelect");
     const raceSelect = document.getElementById("raceSelect");
     const timeInput = document.getElementById("timeInput");
-    const fastestLapInput = document.getElementById("fastestLap");
     const timesList = document.getElementById("timesList");
     const leaderboard = document.getElementById("leaderboard");
     const standings = document.getElementById("standings");
@@ -438,7 +437,6 @@
       }
 
       timeInput.value = "";
-      fastestLapInput.checked = false;
 
       // Beregn plasseringer og handicap for dette løpet
       await calculateRaceResults(raceId);
