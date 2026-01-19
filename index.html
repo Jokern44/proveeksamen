@@ -3,20 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Banetider Supabase</title>
+    <title>Banetider</title>
 
-    <!-- Bootstrap -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Supabase JS v2 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- VIKTIG: RIKTIG SUPABASE CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <style>
-      /* Login overlay */
       #loginOverlay {
         position: fixed;
         inset: 0;
@@ -24,16 +21,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 9999;
       }
     </style>
   </head>
 
   <body>
-    <!-- LOGIN -->
     <div id="loginOverlay">
       <div class="card p-4" style="width: 350px">
-        <h4 class="text-center mb-3">Login / Register</h4>
+        <h4 class="mb-3 text-center">Login / Register</h4>
 
         <input id="email" class="form-control mb-2" placeholder="Epost" />
         <input
@@ -43,15 +38,17 @@
           placeholder="Passord"
         />
 
-        <button class="btn btn-success mb-2" onclick="login()">Login</button>
-        <button class="btn btn-primary" onclick="register()">Register</button>
+        <button type="button" class="btn btn-success mb-2" onclick="login()">
+          Login
+        </button>
+        <button type="button" class="btn btn-primary" onclick="register()">
+          Register
+        </button>
       </div>
     </div>
 
-    <!-- MAIN -->
     <div class="container mt-5" id="main" style="display: none">
       <h2>Banetider</h2>
-
       <select id="trackSelect" class="form-select mb-2"></select>
 
       <input
@@ -59,49 +56,41 @@
         class="form-control mb-2"
         placeholder="Tid i sekunder"
       />
-
       <button class="btn btn-warning mb-3" onclick="saveTime()">
         Lagre tid
       </button>
 
-      <h4>Dine tider</h4>
+      <h5>Dine tider</h5>
       <ul id="timesList" class="list-group mb-3"></ul>
 
-      <h4>Leaderboard (topp 5)</h4>
+      <h5>Leaderboard</h5>
       <ul id="leaderboard" class="list-group mb-3"></ul>
 
       <button class="btn btn-danger" onclick="logout()">Logg ut</button>
     </div>
 
     <script>
-      /* ===============================
-         SUPABASE SETUP
-      =============================== */
-
+      /* ===== SUPABASE ===== */
       const supabaseUrl = "https://mvnnwmgkjmhemchiduiq.supabase.co";
       const supabaseKey =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
 
-      // VIKTIG: bruk eget navn, ikke "supabase"
-      const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+      const supabaseClient = window.supabase.createClient(
+        supabaseUrl,
+        supabaseKey
+      );
 
-      let currentUserId = null;
+      let userId = null;
 
-      /* ===============================
-         AUTH
-      =============================== */
-
+      /* ===== AUTH ===== */
       async function register() {
         const email = emailInput();
         const password = passwordInput();
 
-        const { error } = await supabaseClient.auth.signUp({
-          email,
-          password,
-        });
-
+        const { error } = await supabaseClient.auth.signUp({ email, password });
         if (error) return alert(error.message);
-        alert("Sjekk epost for bekreftelse wallah");
+
+        alert("Sjekk epost wallah");
       }
 
       async function login() {
@@ -115,8 +104,9 @@
 
         if (error) return alert(error.message);
 
-        currentUserId = data.user.id;
-        showMain();
+        userId = data.user.id;
+        loginOverlay.style.display = "none";
+        main.style.display = "block";
         loadTracks();
       }
 
@@ -125,21 +115,16 @@
         location.reload();
       }
 
-      /* ===============================
-         DATA
-      =============================== */
-
+      /* ===== DATA ===== */
       async function loadTracks() {
-        const { data, error } = await supabaseClient.from("Tracks").select("*");
-
-        if (error) return alert(error.message);
-
+        const { data } = await supabaseClient.from("Tracks").select("*");
         trackSelect.innerHTML = "";
+
         data.forEach((t) => {
-          const opt = document.createElement("option");
-          opt.value = t.id;
-          opt.textContent = t.track_name;
-          trackSelect.appendChild(opt);
+          const o = document.createElement("option");
+          o.value = t.id;
+          o.textContent = t.track_name;
+          trackSelect.appendChild(o);
         });
 
         loadTimes();
@@ -147,18 +132,14 @@
       }
 
       async function saveTime() {
-        const time = parseFloat(timeInput.value);
+        const time = Number(timeInput.value);
         const trackId = Number(trackSelect.value);
 
-        if (isNaN(time)) return alert("Skriv tall wallah");
-
-        const { error } = await supabaseClient.from("Times").insert({
-          user_id: currentUserId,
+        await supabaseClient.from("Times").insert({
+          user_id: userId,
           track_id: trackId,
-          time: time,
+          time,
         });
-
-        if (error) return alert(error.message);
 
         timeInput.value = "";
         loadTimes();
@@ -168,20 +149,17 @@
       async function loadTimes() {
         const trackId = Number(trackSelect.value);
 
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
           .from("Times")
           .select("*")
-          .eq("user_id", currentUserId)
-          .eq("track_id", trackId)
-          .order("created_at", { ascending: true });
-
-        if (error) return alert(error.message);
+          .eq("user_id", userId)
+          .eq("track_id", trackId);
 
         timesList.innerHTML = "";
-        data.forEach((t, i) => {
+        data.forEach((t) => {
           const li = document.createElement("li");
           li.className = "list-group-item";
-          li.textContent = `${i + 1}. ${t.time} sek`;
+          li.textContent = t.time + " sek";
           timesList.appendChild(li);
         });
       }
@@ -189,14 +167,12 @@
       async function loadLeaderboard() {
         const trackId = Number(trackSelect.value);
 
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
           .from("Times")
-          .select("time, user_id")
+          .select("time")
           .eq("track_id", trackId)
           .order("time", { ascending: true })
           .limit(5);
-
-        if (error) return alert(error.message);
 
         leaderboard.innerHTML = "";
         data.forEach((t, i) => {
@@ -207,22 +183,9 @@
         });
       }
 
-      /* ===============================
-         HELPERS
-      =============================== */
-
-      function emailInput() {
-        return document.getElementById("email").value;
-      }
-
-      function passwordInput() {
-        return document.getElementById("password").value;
-      }
-
-      function showMain() {
-        loginOverlay.style.display = "none";
-        main.style.display = "block";
-      }
+      /* ===== HELPERS ===== */
+      const emailInput = () => document.getElementById("email").value;
+      const passwordInput = () => document.getElementById("password").value;
     </script>
   </body>
 </html>
