@@ -94,8 +94,6 @@
 
     async function login() {
       console.log("Login clicked");
-      console.log("window.supabaseClient in login:", window.supabaseClient);
-      console.log("window.supabaseClient?.auth:", window.supabaseClient?.auth);
       clearMsg();
       const usernameInput = usernameEl.value.trim();
       const emailInput = emailEl.value.trim();
@@ -108,25 +106,12 @@
       try {
         let email = emailInput;
 
-        // Hvis brukernavn er fylt ut, bruk det til å finne email
-        if (usernameInput) {
+        // Hvis brukernavn er fylt ut, finn epost fra Users-tabellen
+        if (usernameInput && !emailInput) {
           const { data: userData } = await window.supabaseClient
             .from("Users")
             .select("email")
             .eq("username", usernameInput)
-            .single();
-
-          if (userData) {
-            email = userData.email;
-          } else {
-            return showMsg("Brukernavn ikke funnet");
-          }
-        } else if (!emailInput.includes("@")) {
-          // Hvis email-feltet ikke inneholder @, prøv som brukernavn
-          const { data: userData } = await window.supabaseClient
-            .from("Users")
-            .select("email")
-            .eq("username", emailInput)
             .single();
 
           if (userData) {
