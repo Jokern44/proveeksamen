@@ -88,22 +88,49 @@
           >
           <input
             id="timeInput"
-            class="form-control"
+            class="form-control mb-2"
             placeholder="MM:SS.MS"
             pattern="^\d{1,2}:\d{2}\.\d{2}$"
           />
+          <label for="placement">Plassering (1-4)</label>
+          <input
+            id="placement"
+            type="number"
+            class="form-control mb-2"
+            placeholder="1"
+            min="1"
+            max="4"
+          />
+          <label for="handicap">Handicap (kg)</label>
+          <input
+            id="handicap"
+            type="number"
+            class="form-control mb-2"
+            placeholder="0"
+            value="0"
+          />
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="fastestLap" />
+            <label class="form-check-label" for="fastestLap">
+              Raskeste runde (+1 poeng)
+            </label>
+          </div>
         </div>
         <button id="btnSave" class="btn btn-warning">Lagre tid</button>
       </div>
 
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <h5>Dine tider</h5>
           <ul id="timesList" class="list-group"></ul>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <h5>Toppscorer</h5>
           <ul id="leaderboard" class="list-group"></ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Sammenlagt</h5>
+          <ul id="standings" class="list-group"></ul>
         </div>
       </div>
 

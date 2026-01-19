@@ -36,8 +36,12 @@
 
     const trackSelect = document.getElementById("trackSelect");
     const timeInput = document.getElementById("timeInput");
+    const placementInput = document.getElementById("placement");
+    const handicapInput = document.getElementById("handicap");
+    const fastestLapInput = document.getElementById("fastestLap");
     const timesList = document.getElementById("timesList");
     const leaderboard = document.getElementById("leaderboard");
+    const standings = document.getElementById("standings");
 
     let currentUser = null;
 
@@ -162,27 +166,34 @@
       });
       loadTimes();
       loadLeaderboard();
+      loadStandings();
     }
 
     async function saveTime() {
       if (!currentUser) return alert("Ikke innlogget");
       const timeInput_value = timeInput.value.trim();
       const trackId = Number(trackSelect.value);
+      const placement = Number(placementInput.value);
+      const handicap = Number(handicapInput.value) || 0;
+      const fastestLap = fastestLapInput.checked;
 
       // Parse rundetid fra format MM:SS.MS til sekund
       const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{2})$/;
       const match = timeInput_value.match(timeRegex);
 
-      if (!match || !trackId) {
-        return alert(
-          "Skriv gyldig rundetid i format MM:SS.MS (f.eks. 1:23.45)"
-        );
+      if (!match || !trackId || !placement || placement < 1 || placement > 4) {
+        return alert("Fyll inn gyldig rundetid (MM:SS.MS) og plassering (1-4)");
       }
 
       const minutes = parseInt(match[1]);
       const seconds = parseInt(match[2]);
       const centiseconds = parseInt(match[3]);
       const totalSeconds = minutes * 60 + seconds + centiseconds / 100;
+
+      // Beregn poeng basert på plassering
+      const pointsMap = { 1: 15, 2: 13, 3: 11, 4: 10 };
+      let points = pointsMap[placement] || 0;
+      if (fastestLap) points += 1; // Ekstrapoeng for raskeste runde
 
       // Hent brukernavnet fra user metadata
       const username =
@@ -194,6 +205,10 @@
           track_id: trackId,
           time: totalSeconds,
           username: username,
+          placement: placement,
+          handicap_kg: handicap,
+          points: points,
+          fastest_lap: fastestLap,
         },
       ]);
       if (error) {
@@ -202,8 +217,12 @@
         return;
       }
       timeInput.value = "";
+      placementInput.value = "";
+      handicapInput.value = "0";
+      fastestLapInput.checked = false;
       loadTimes();
       loadLeaderboard();
+      loadStandings();
     }
 
     async function loadTimes() {
@@ -278,6 +297,46 @@
         li.className = "list-group-item";
         li.textContent = `${i + 1}. ${formatted} — ${t.username || "Ukjent"}`;
         leaderboard.appendChild(li);
+      });
+    }
+
+    async function loadStandings() {
+      // Hent alle tider med poeng
+      const { data, error } = await window.supabaseClient
+        .from("Times")
+        .select("username, points");
+
+      if (error) {
+        console.error("Error loading standings:", error);
+        return;
+      }
+
+      // Grupper og summer poeng per bruker
+      const userPoints = {};
+      (data || []).forEach((t) => {
+        const name = t.username || "Ukjent";
+        if (!userPoints[name]) {
+          userPoints[name] = 0;
+        }
+        userPoints[name] += t.points || 0;
+      });
+
+      // Konverter til array og sorter
+      const sorted = Object.entries(userPoints)
+        .map(([username, points]) => ({ username, points }))
+        .sort((a, b) => b.points - a.points);
+
+      standings.innerHTML = "";
+      if (sorted.length === 0) {
+        standings.innerHTML = "<li class='list-group-item'>Ingen data</li>";
+        return;
+      }
+
+      sorted.forEach((u, i) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.textContent = `${i + 1}. ${u.username} — ${u.points} poeng`;
+        standings.appendChild(li);
       });
     }
 
