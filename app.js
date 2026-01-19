@@ -39,11 +39,24 @@
 
     // Initialize supabase only once
     if (!window.supabaseClient) {
-      window.supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
+      console.log("Creating Supabase client...");
+      console.log("SUPABASE_URL:", SUPABASE_URL);
+      console.log(
+        "SUPABASE_ANON_KEY:",
+        SUPABASE_ANON_KEY.substring(0, 20) + "..."
       );
-      console.log("Supabase client initialized:", window.supabaseClient);
+      try {
+        window.supabaseClient = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY
+        );
+        console.log(
+          "Supabase client created successfully:",
+          window.supabaseClient
+        );
+      } catch (err) {
+        console.error("Error creating Supabase client:", err);
+      }
     }
 
     const loginOverlay = document.getElementById("loginOverlay");
