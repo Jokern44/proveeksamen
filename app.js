@@ -10,20 +10,35 @@
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
 
+  // Vent på Supabase
+  function waitForSupabase() {
+    return new Promise((resolve) => {
+      if (window.supabase) {
+        resolve();
+      } else {
+        const checkInterval = setInterval(() => {
+          if (window.supabase) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+      }
+    });
+  }
+
   if (typeof window.supabaseClient === "undefined") {
     window.supabaseClient = null;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     console.log("DOMContentLoaded fired");
-    console.log("window.supabase:", window.supabase);
+
+    // Vent på at Supabase lastes
+    await waitForSupabase();
+    console.log("Supabase available:", window.supabase);
 
     // Initialize supabase only once
     if (!window.supabaseClient) {
-      if (!window.supabase) {
-        console.error("Supabase library not loaded!");
-        return;
-      }
       window.supabaseClient = window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
