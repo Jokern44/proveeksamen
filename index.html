@@ -77,43 +77,96 @@
 
     <!-- MAIN -->
     <div class="container mt-5" id="main" style="display: none">
-      <h2>Banetider</h2>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>PK X-treme Racers</h2>
+        <button id="btnLogout" class="btn btn-danger">Logg ut</button>
+      </div>
+
+      <!-- Admin: Nytt løp -->
+      <div id="adminSection" class="card p-3 mb-3" style="display: none">
+        <h5>Admin: Nytt løp</h5>
+        <input
+          id="newRaceName"
+          class="form-control mb-2"
+          placeholder="Løpsnavn (f.eks. Løp 1)"
+        />
+        <textarea
+          id="newRaceDesc"
+          class="form-control mb-2"
+          placeholder="Beskrivelse (valgfri)"
+          rows="2"
+        ></textarea>
+        <button id="btnCreateRace" class="btn btn-primary">Opprett løp</button>
+      </div>
+
+      <!-- Velg bane og løp -->
       <div class="card p-3 mb-3">
         <label for="trackSelect">Velg bane</label>
         <select id="trackSelect" class="form-select mb-2"></select>
-        <div class="mb-2">
-          <label for="timeInput">Rundetid</label>
-          <small class="d-block text-muted mb-2"
-            >Format: MM:SS.MS (f.eks. 1:23.45 eller 0:05.32)</small
-          >
-          <input
-            id="timeInput"
+        
+        <label for="raceSelect">Velg løp</label>
+        <select id="raceSelect" class="form-select mb-2"></select>
+
+        <!-- Løpsbeskrivelse -->
+        <div id="raceDescSection" style="display: none" class="mt-2">
+          <label>Løpsbeskrivelse</label>
+          <textarea
+            id="raceDesc"
             class="form-control mb-2"
-            placeholder="MM:SS.MS"
-            pattern="^\d{1,2}:\d{2}\.\d{2}$"
-          />
-          <label for="placement">Plassering (1-4)</label>
-          <input
-            id="placement"
-            type="number"
-            class="form-control mb-2"
-            placeholder="1"
-            min="1"
-            max="4"
-          />
-          <label for="handicap">Handicap (kg)</label>
-          <input
-            id="handicap"
-            type="number"
-            class="form-control mb-2"
-            placeholder="0"
-            value="0"
-          />
-          <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="fastestLap" />
-            <label class="form-check-label" for="fastestLap">
-              Raskeste runde (+1 poeng)
-            </label>
+            rows="3"
+            readonly
+          ></textarea>
+          <button id="btnEditDesc" class="btn btn-sm btn-secondary" style="display: none">
+            Rediger beskrivelse
+          </button>
+          <button id="btnSaveDesc" class="btn btn-sm btn-success" style="display: none">
+            Lagre
+          </button>
+        </div>
+      </div>
+
+      <!-- Registrer tid -->
+      <div class="card p-3 mb-3">
+        <h5>Registrer rundetid</h5>
+        <label for="timeInput">Rundetid</label>
+        <small class="d-block text-muted mb-2"
+          >Format: MM:SS.MS (f.eks. 1:23.45 eller 0:05.32)</small
+        >
+        <input
+          id="timeInput"
+          class="form-control mb-2"
+          placeholder="MM:SS.MS"
+          pattern="^\d{1,2}:\d{2}\.\d{2}$"
+        />
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="fastestLap" />
+          <label class="form-check-label" for="fastestLap">
+            Raskeste runde (+1 poeng)
+          </label>
+        </div>
+        <button id="btnSave" class="btn btn-warning">Lagre tid</button>
+      </div>
+
+      <!-- Resultater -->
+      <div class="row">
+        <div class="col-md-4">
+          <h5>Dine tider</h5>
+          <ul id="timesList" class="list-group"></ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Resultat - Dette løpet</h5>
+          <ul id="leaderboard" class="list-group"></ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Sammenlagt</h5>
+          <ul id="standings" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
           </div>
         </div>
         <button id="btnSave" class="btn btn-warning">Lagre tid</button>
