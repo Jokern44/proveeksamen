@@ -97,16 +97,32 @@
       console.log("window.supabaseClient in login:", window.supabaseClient);
       console.log("window.supabaseClient?.auth:", window.supabaseClient?.auth);
       clearMsg();
-      let emailInput = emailEl.value.trim();
+      const usernameInput = usernameEl.value.trim();
+      const emailInput = emailEl.value.trim();
       const password = passwordEl.value;
-      if (!emailInput || !password)
-        return showMsg("Fyll inn brukernavn/epost og passord");
+
+      if (!password) return showMsg("Fyll inn passord");
+      if (!usernameInput && !emailInput)
+        return showMsg("Fyll inn brukernavn eller epost");
 
       try {
         let email = emailInput;
 
-        // Hvis input ikke inneholder @, søk etter username i Users-tabellen
-        if (!emailInput.includes("@")) {
+        // Hvis brukernavn er fylt ut, bruk det til å finne email
+        if (usernameInput) {
+          const { data: userData } = await window.supabaseClient
+            .from("Users")
+            .select("email")
+            .eq("username", usernameInput)
+            .single();
+
+          if (userData) {
+            email = userData.email;
+          } else {
+            return showMsg("Brukernavn ikke funnet");
+          }
+        } else if (!emailInput.includes("@")) {
+          // Hvis email-feltet ikke inneholder @, prøv som brukernavn
           const { data: userData } = await window.supabaseClient
             .from("Users")
             .select("email")
