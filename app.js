@@ -2,13 +2,19 @@ const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
 
-let supabase;
+if (typeof window.supabaseClient === "undefined") {
+  window.supabaseClient = null;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize supabase only once
-  if (!supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (!window.supabaseClient) {
+    window.supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
   }
+  const supabase = window.supabaseClient;
 
   const loginOverlay = document.getElementById("loginOverlay");
   const main = document.getElementById("main");
