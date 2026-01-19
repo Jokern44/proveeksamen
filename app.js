@@ -1,4 +1,5 @@
-if (!window.supabaseInitialized) {
+(function () {
+  if (window.supabaseInitialized) return;
   window.supabaseInitialized = true;
 
   const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
@@ -190,4 +191,4 @@ if (!window.supabaseInitialized) {
       loadLeaderboard();
     });
   }); // DOMContentLoaded
-} // end of if (!window.supabaseInitialized)
+})(); // end IIFE
