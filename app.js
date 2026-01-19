@@ -73,7 +73,16 @@
           },
         });
         if (error) return showMsg("Register feilet: " + error.message);
-        showMsg("Registrert!", false);
+
+        // Lagre også i Users-tabellen for username-søk
+        await window.supabaseClient.from("Users").insert([
+          {
+            email: email,
+            username: username,
+          },
+        ]);
+
+        showMsg("Registrert! Sjekk epost for bekreftelse", false);
         usernameEl.value = "";
         emailEl.value = "";
         passwordEl.value = "";
@@ -88,11 +97,29 @@
       console.log("window.supabaseClient in login:", window.supabaseClient);
       console.log("window.supabaseClient?.auth:", window.supabaseClient?.auth);
       clearMsg();
-      const email = emailEl.value.trim();
+      let emailInput = emailEl.value.trim();
       const password = passwordEl.value;
-      if (!email || !password) return showMsg("Fyll inn epost og passord");
+      if (!emailInput || !password)
+        return showMsg("Fyll inn brukernavn/epost og passord");
 
       try {
+        let email = emailInput;
+
+        // Hvis input ikke inneholder @, søk etter username i Users-tabellen
+        if (!emailInput.includes("@")) {
+          const { data: userData } = await window.supabaseClient
+            .from("Users")
+            .select("email")
+            .eq("username", emailInput)
+            .single();
+
+          if (userData) {
+            email = userData.email;
+          } else {
+            return showMsg("Brukernavn ikke funnet");
+          }
+        }
+
         const { data, error } =
           await window.supabaseClient.auth.signInWithPassword({
             email,
