@@ -100,6 +100,8 @@
           });
         if (error) return showMsg("Login feilet: " + error.message);
         currentUser = data.user;
+        console.log("Logged in user:", currentUser);
+        console.log("User metadata:", currentUser?.user_metadata);
         if (currentUser) showMain();
         loadTracks();
         showMsg("Innlogget!", false);
