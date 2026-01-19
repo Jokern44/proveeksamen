@@ -29,6 +29,19 @@
   document.addEventListener("DOMContentLoaded", () => {
     console.log("DOMContentLoaded fired");
     console.log("window.supabaseClient:", window.supabaseClient);
+    console.log("window.supabase:", window.supabase);
+
+    // Initialize supabase if not already done
+    if (!window.supabaseClient && window.supabase) {
+      console.log("Initializing Supabase client in DOMContentLoaded");
+      window.supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+      console.log("Supabase client created:", window.supabaseClient);
+    } else if (!window.supabase) {
+      console.error("window.supabase is still not available!");
+    }
 
     const loginOverlay = document.getElementById("loginOverlay");
     const main = document.getElementById("main");
