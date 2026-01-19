@@ -27,7 +27,7 @@
     const btnLogout = document.getElementById("btnLogout");
     const btnSave = document.getElementById("btnSave");
 
-    const gpSelect = document.getElementById("gpSelect");
+    const seasonSelect = document.getElementById("seasonSelect");
     const adminSeasonSelect = document.getElementById("adminSeasonSelect");
     const raceSelect = document.getElementById("raceSelect");
     const timeInput = document.getElementById("timeInput");
@@ -161,7 +161,7 @@
         }
 
         if (currentUser) showMain();
-        loadGrandPrix();
+        loadSeasons();
         showMsg("Innlogget!", false);
         usernameEl.value = "";
         emailEl.value = "";
@@ -196,7 +196,7 @@
       });
     }
 
-    async function loadGrandPrix() {
+    async function loadSeasons() {
       const { data, error } = await window.supabaseClient
         .from("GrandPrix")
         .select("*")
@@ -205,7 +205,7 @@
         console.error("Error loading sesong:", error);
         return;
       }
-      gpSelect.innerHTML = '<option value="">Velg sesong</option>';
+      seasonSelect.innerHTML = '<option value="">Velg sesong</option>';
       if (adminSeasonSelect) {
         adminSeasonSelect.innerHTML = '<option value="">Velg sesong</option>';
       }
@@ -214,7 +214,7 @@
         const o = document.createElement("option");
         o.value = gp.id;
         o.textContent = gp.name;
-        gpSelect.appendChild(o);
+        seasonSelect.appendChild(o);
 
         if (adminSeasonSelect) {
           const adminOpt = document.createElement("option");
@@ -223,9 +223,14 @@
           adminSeasonSelect.appendChild(adminOpt);
         }
       });
+
+      // Hold admin- og bruker-valg i synk så nye løp settes på valgt sesong
+      if (adminSeasonSelect) {
+        adminSeasonSelect.value = seasonSelect.value || "";
+      }
     }
 
-    async function createGrandPrix() {
+    async function createSeason() {
       const gpName = newGPName.value.trim();
 
       if (!gpName) {
@@ -249,12 +254,12 @@
 
       newGPName.value = "";
       newGPDesc.value = "";
-      loadGrandPrix();
+      loadSeasons();
       alert("Sesong opprettet!");
     }
 
     async function loadRaces() {
-      const gpId = Number(gpSelect.value);
+      const gpId = Number(seasonSelect.value);
       if (!gpId) {
         raceSelect.innerHTML = '<option value="">Velg sesong først</option>';
         raceDescSection.style.display = "none";
@@ -629,12 +634,18 @@
     btnLogin.addEventListener("click", login);
     btnLogout.addEventListener("click", logout);
     btnSave.addEventListener("click", saveTime);
-    btnCreateGP.addEventListener("click", createGrandPrix);
+    btnCreateGP.addEventListener("click", createSeason);
     btnCreateRace.addEventListener("click", createRace);
     btnEditDesc.addEventListener("click", enableDescEdit);
     btnSaveDesc.addEventListener("click", saveDescEdit);
 
-    gpSelect.addEventListener("change", loadRaces);
+    seasonSelect.addEventListener("change", loadRaces);
+    if (adminSeasonSelect) {
+      adminSeasonSelect.addEventListener("change", () => {
+        seasonSelect.value = adminSeasonSelect.value;
+        loadRaces();
+      });
+    }
     raceSelect.addEventListener("change", showRaceDescription);
 
     console.log("Event listeners attached");
