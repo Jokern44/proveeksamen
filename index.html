@@ -82,13 +82,13 @@
         <button id="btnLogout" class="btn btn-danger">Logg ut</button>
       </div>
 
-      <!-- Admin: Ny Grand Prix -->
+      <!-- Admin: Ny sesong -->
       <div id="adminSection" class="card p-3 mb-3" style="display: none">
-        <h5>Admin: Ny Grand Prix</h5>
+        <h5>Admin: Ny sesong</h5>
         <input
           id="newGPName"
           class="form-control mb-2"
-          placeholder="Grand Prix navn (f.eks. Sesong 1)"
+          placeholder="Sesongnavn (f.eks. Sesong 1)"
         />
         <textarea
           id="newGPDesc"
@@ -96,10 +96,15 @@
           placeholder="Beskrivelse (valgfri)"
           rows="2"
         ></textarea>
-        <button id="btnCreateGP" class="btn btn-primary mb-3">Opprett Grand Prix</button>
-        
+        <button id="btnCreateGP" class="btn btn-primary mb-3">
+          Opprett sesong
+        </button>
+
         <hr />
         <h5>Admin: Nytt løp</h5>
+        <select id="adminSeasonSelect" class="form-select mb-2">
+          <option value="">Velg sesong</option>
+        </select>
         <select id="adminTrackSelect" class="form-select mb-2">
           <option value="">Velg bane for løpet</option>
         </select>
@@ -117,11 +122,11 @@
         <button id="btnCreateRace" class="btn btn-primary">Opprett løp</button>
       </div>
 
-      <!-- Velg Grand Prix og løp -->
+      <!-- Velg sesong og løp -->
       <div class="card p-3 mb-3">
-        <label for="gpSelect">Velg Grand Prix</label>
+        <label for="gpSelect">Velg sesong</label>
         <select id="gpSelect" class="form-select mb-2"></select>
-        
+
         <label for="raceSelect">Velg løp</label>
         <select id="raceSelect" class="form-select mb-2"></select>
 
@@ -134,10 +139,18 @@
             rows="3"
             readonly
           ></textarea>
-          <button id="btnEditDesc" class="btn btn-sm btn-secondary" style="display: none">
+          <button
+            id="btnEditDesc"
+            class="btn btn-sm btn-secondary"
+            style="display: none"
+          >
             Rediger beskrivelse
           </button>
-          <button id="btnSaveDesc" class="btn btn-sm btn-success" style="display: none">
+          <button
+            id="btnSaveDesc"
+            class="btn btn-sm btn-success"
+            style="display: none"
+          >
             Lagre
           </button>
         </div>
@@ -180,32 +193,6 @@
           <ul id="standings" class="list-group"></ul>
         </div>
       </div>
-    </div>
-
-    <script src="app.js"></script>
-  </body>
-</html>
-          </div>
-        </div>
-        <button id="btnSave" class="btn btn-warning">Lagre tid</button>
-      </div>
-
-      <div class="row">
-        <div class="col-md-4">
-          <h5>Dine tider</h5>
-          <ul id="timesList" class="list-group"></ul>
-        </div>
-        <div class="col-md-4">
-          <h5>Toppscorer</h5>
-          <ul id="leaderboard" class="list-group"></ul>
-        </div>
-        <div class="col-md-4">
-          <h5>Sammenlagt</h5>
-          <ul id="standings" class="list-group"></ul>
-        </div>
-      </div>
-
-      <button id="btnLogout" class="btn btn-danger mt-3">Logg ut</button>
     </div>
 
     <script src="app.js"></script>

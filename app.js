@@ -28,6 +28,7 @@
     const btnSave = document.getElementById("btnSave");
 
     const gpSelect = document.getElementById("gpSelect");
+    const adminSeasonSelect = document.getElementById("adminSeasonSelect");
     const raceSelect = document.getElementById("raceSelect");
     const timeInput = document.getElementById("timeInput");
     const fastestLapInput = document.getElementById("fastestLap");
@@ -201,15 +202,26 @@
         .select("*")
         .order("created_at", { ascending: true });
       if (error) {
-        console.error("Error loading Grand Prix:", error);
+        console.error("Error loading sesong:", error);
         return;
       }
-      gpSelect.innerHTML = '<option value="">Velg Grand Prix</option>';
+      gpSelect.innerHTML = '<option value="">Velg sesong</option>';
+      if (adminSeasonSelect) {
+        adminSeasonSelect.innerHTML = '<option value="">Velg sesong</option>';
+      }
+
       (data || []).forEach((gp) => {
         const o = document.createElement("option");
         o.value = gp.id;
         o.textContent = gp.name;
         gpSelect.appendChild(o);
+
+        if (adminSeasonSelect) {
+          const adminOpt = document.createElement("option");
+          adminOpt.value = gp.id;
+          adminOpt.textContent = gp.name;
+          adminSeasonSelect.appendChild(adminOpt);
+        }
       });
     }
 
@@ -217,7 +229,7 @@
       const gpName = newGPName.value.trim();
 
       if (!gpName) {
-        return alert("Skriv Grand Prix navn");
+        return alert("Skriv sesongnavn");
       }
 
       const { data, error } = await window.supabaseClient
@@ -230,7 +242,7 @@
         ]);
 
       if (error) {
-        console.error("Error creating Grand Prix:", error);
+        console.error("Error creating sesong:", error);
         alert("Feil ved opprettelse: " + error.message);
         return;
       }
@@ -238,14 +250,13 @@
       newGPName.value = "";
       newGPDesc.value = "";
       loadGrandPrix();
-      alert("Grand Prix opprettet!");
+      alert("Sesong opprettet!");
     }
 
     async function loadRaces() {
       const gpId = Number(gpSelect.value);
       if (!gpId) {
-        raceSelect.innerHTML =
-          '<option value="">Velg Grand Prix først</option>';
+        raceSelect.innerHTML = '<option value="">Velg sesong først</option>';
         raceDescSection.style.display = "none";
         return;
       }
@@ -296,12 +307,12 @@
     }
 
     async function createRace() {
-      const gpId = Number(gpSelect.value);
+      const gpId = Number(adminSeasonSelect.value);
       const trackId = Number(adminTrackSelect.value);
       const raceName = newRaceName.value.trim();
 
       if (!gpId || !trackId || !raceName) {
-        return alert("Velg Grand Prix, bane og skriv løpsnavn");
+        return alert("Velg sesong, bane og skriv løpsnavn");
       }
 
       const { data, error } = await window.supabaseClient.from("Races").insert([
