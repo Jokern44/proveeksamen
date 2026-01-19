@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Banetider Supabase</title>
 
-    <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-
-    <!-- Supabase UMD v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <style>
@@ -59,7 +56,6 @@
       <div class="card p-3 mb-3">
         <label for="trackSelect">Velg bane</label>
         <select id="trackSelect" class="form-select mb-2"></select>
-
         <input
           id="timeInput"
           class="form-control mb-2"
@@ -78,27 +74,25 @@
     </div>
 
     <script>
-      // ---------- Supabase setup (én gang) ----------
       const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
+
       const supabase = window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
       );
 
-      // ---------- DOM refs ----------
+      // DOM
       const loginOverlay = document.getElementById("loginOverlay");
       const main = document.getElementById("main");
       const emailEl = document.getElementById("email");
       const passwordEl = document.getElementById("password");
       const authMsg = document.getElementById("authMsg");
-
       const btnLogin = document.getElementById("btnLogin");
       const btnRegister = document.getElementById("btnRegister");
       const btnLogout = document.getElementById("btnLogout");
       const btnSave = document.getElementById("btnSave");
-
       const trackSelect = document.getElementById("trackSelect");
       const timeInput = document.getElementById("timeInput");
       const timesList = document.getElementById("timesList");
@@ -118,7 +112,7 @@
         main.style.display = "block";
       }
 
-      // ---------- AUTH ----------
+      // AUTH
       async function register() {
         clearMsg();
         const email = emailEl.value.trim();
@@ -167,7 +161,7 @@
         location.reload();
       }
 
-      // ---------- DATA ----------
+      // DATA
       async function loadTracks() {
         const { data, error } = await supabase
           .from("Tracks")
@@ -253,7 +247,7 @@
             "<li class='list-group-item'>Ingen tider</li>";
       }
 
-      // ---------- EVENTS ----------
+      // EVENTS
       btnRegister.addEventListener("click", register);
       btnLogin.addEventListener("click", login);
       btnLogout.addEventListener("click", logout);
