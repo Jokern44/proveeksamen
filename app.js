@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
       SUPABASE_ANON_KEY
     );
   }
-  const supabase = window.supabaseClient;
 
   const loginOverlay = document.getElementById("loginOverlay");
   const main = document.getElementById("main");
@@ -53,7 +52,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!email || !password) return showMsg("Fyll inn epost og passord wallah");
 
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await window.supabaseClient.auth.signUp({
+        email,
+        password,
+      });
       if (error) return showMsg("Register feilet: " + error.message);
       showMsg("Registrert! Sjekk epost wallah", false);
     } catch (e) {
@@ -69,10 +71,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!email || !password) return showMsg("Fyll inn epost og passord wallah");
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } =
+        await window.supabaseClient.auth.signInWithPassword({
+          email,
+          password,
+        });
       if (error) return showMsg("Login feilet: " + error.message);
       currentUser = data.user;
       if (currentUser) showMain();
@@ -85,12 +88,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    await window.supabaseClient.auth.signOut();
     location.reload();
   }
 
   async function loadTracks() {
-    const { data, error } = await supabase
+    const { data, error } = await window.supabaseClient
       .from("Tracks")
       .select("*")
       .order("id", { ascending: true });
@@ -112,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const trackId = Number(trackSelect.value);
     if (isNaN(time) || !trackId) return alert("Skriv gyldig tid og velg bane");
 
-    const { data, error } = await supabase
+    const { data, error } = await window.supabaseClient
       .from("Times")
       .insert([{ user_id: currentUser.id, track_id: trackId, time }]);
     if (error) return console.error(error);
@@ -129,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await window.supabaseClient
       .from("Times")
       .select("*")
       .eq("user_id", currentUser.id)
@@ -154,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await window.supabaseClient
       .from("Times")
       .select("time, user_id")
       .eq("track_id", trackId)
