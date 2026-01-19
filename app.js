@@ -1,5 +1,9 @@
 (function () {
-  if (window.supabaseInitialized) return;
+  console.log("App.js loaded");
+  if (window.supabaseInitialized) {
+    console.log("Already initialized, returning");
+    return;
+  }
   window.supabaseInitialized = true;
 
   const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
@@ -11,13 +15,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    // Initialize supabase only once
-    if (!window.supabaseClient) {
-      window.supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
-    }
+    console.log("DOMContentLoaded fired");
 
     const loginOverlay = document.getElementById("loginOverlay");
     const main = document.getElementById("main");
@@ -29,6 +27,13 @@
     const btnRegister = document.getElementById("btnRegister");
     const btnLogout = document.getElementById("btnLogout");
     const btnSave = document.getElementById("btnSave");
+
+    console.log("Elements found:", {
+      btnLogin,
+      btnRegister,
+      btnLogout,
+      btnSave,
+    });
 
     const trackSelect = document.getElementById("trackSelect");
     const timeInput = document.getElementById("timeInput");
@@ -50,6 +55,7 @@
     }
 
     async function register() {
+      console.log("Register clicked");
       clearMsg();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
@@ -70,6 +76,7 @@
     }
 
     async function login() {
+      console.log("Login clicked");
       clearMsg();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
@@ -186,6 +193,7 @@
     btnLogin.addEventListener("click", login);
     btnLogout.addEventListener("click", logout);
     btnSave.addEventListener("click", saveTime);
+    console.log("Event listeners attached");
     trackSelect.addEventListener("change", () => {
       loadTimes();
       loadLeaderboard();
