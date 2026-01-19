@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Banetider</title>
+    <title>Banetider Supabase</title>
 
+    <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
 
-    <!-- VIKTIG: RIKTIG SUPABASE CDN -->
+    <!-- Riktig Supabase UMD -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <style>
@@ -21,15 +22,18 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        z-index: 9999;
+      }
+      #loginCard {
+        width: 360px;
       }
     </style>
   </head>
-
   <body>
+    <!-- LOGIN -->
     <div id="loginOverlay">
-      <div class="card p-4" style="width: 350px">
-        <h4 class="mb-3 text-center">Login / Register</h4>
-
+      <div id="loginCard" class="card p-4">
+        <h4 class="text-center mb-3">Login / Register</h4>
         <input id="email" class="form-control mb-2" placeholder="Epost" />
         <input
           id="password"
@@ -37,155 +41,238 @@
           class="form-control mb-3"
           placeholder="Passord"
         />
-
-        <button type="button" class="btn btn-success mb-2" onclick="login()">
-          Login
-        </button>
-        <button type="button" class="btn btn-primary" onclick="register()">
-          Register
-        </button>
+        <div class="d-grid gap-2">
+          <button id="btnLogin" class="btn btn-success">Login</button>
+          <button id="btnRegister" class="btn btn-primary">Register</button>
+        </div>
+        <div
+          id="authMsg"
+          class="mt-3 text-center text-danger small"
+          style="min-height: 1.2em"
+        ></div>
       </div>
     </div>
 
+    <!-- MAIN -->
     <div class="container mt-5" id="main" style="display: none">
       <h2>Banetider</h2>
-      <select id="trackSelect" class="form-select mb-2"></select>
 
-      <input
-        id="timeInput"
-        class="form-control mb-2"
-        placeholder="Tid i sekunder"
-      />
-      <button class="btn btn-warning mb-3" onclick="saveTime()">
-        Lagre tid
-      </button>
+      <div class="card p-3 mb-3">
+        <label for="trackSelect">Velg bane</label>
+        <select id="trackSelect" class="form-select mb-2"></select>
 
-      <h5>Dine tider</h5>
-      <ul id="timesList" class="list-group mb-3"></ul>
+        <input
+          id="timeInput"
+          class="form-control mb-2"
+          placeholder="Tid i sekunder"
+        />
+        <button id="btnSave" class="btn btn-warning mb-3">Lagre tid</button>
 
-      <h5>Leaderboard</h5>
-      <ul id="leaderboard" class="list-group mb-3"></ul>
+        <h5>Dine tider</h5>
+        <ul id="timesList" class="list-group mb-3"></ul>
 
-      <button class="btn btn-danger" onclick="logout()">Logg ut</button>
+        <h5>Leaderboard (topp 5)</h5>
+        <ul id="leaderboard" class="list-group mb-3"></ul>
+
+        <button id="btnLogout" class="btn btn-danger">Logg ut</button>
+      </div>
     </div>
 
     <script>
-      /* ===== SUPABASE ===== */
-      const supabaseUrl = "https://mvnnwmgkjmhemchiduiq.supabase.co";
-      const supabaseKey =
+      // ---------- KONFIG ----------
+      const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
+      const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
 
-      const supabaseClient = window.supabase.createClient(
-        supabaseUrl,
-        supabaseKey
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
       );
 
-      let userId = null;
+      // ---------- DOM ----------
+      const loginOverlay = document.getElementById("loginOverlay");
+      const main = document.getElementById("main");
+      const emailEl = document.getElementById("email");
+      const passwordEl = document.getElementById("password");
+      const authMsg = document.getElementById("authMsg");
 
-      /* ===== AUTH ===== */
+      const btnLogin = document.getElementById("btnLogin");
+      const btnRegister = document.getElementById("btnRegister");
+      const btnLogout = document.getElementById("btnLogout");
+      const btnSave = document.getElementById("btnSave");
+
+      const trackSelect = document.getElementById("trackSelect");
+      const timeInput = document.getElementById("timeInput");
+      const timesList = document.getElementById("timesList");
+      const leaderboard = document.getElementById("leaderboard");
+
+      let currentUser = null;
+
+      // ---------- HELPERS ----------
+      function showAuthMessage(msg, isError = true) {
+        authMsg.style.color = isError ? "red" : "green";
+        authMsg.textContent = msg;
+      }
+      function clearAuthMessage() {
+        authMsg.textContent = "";
+      }
+
+      // ---------- AUTH ----------
       async function register() {
-        const email = emailInput();
-        const password = passwordInput();
+        clearAuthMessage();
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+        if (!email || !password)
+          return showAuthMessage("Fyll inn epost og passord wallah");
 
-        const { error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) return alert(error.message);
-
-        alert("Sjekk epost wallah");
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+          if (error)
+            return showAuthMessage("Register feilet: " + error.message);
+          showAuthMessage("Registrert! Sjekk epost wallah", false);
+        } catch (e) {
+          console.error(e);
+          showAuthMessage("Register exception, se console");
+        }
       }
 
       async function login() {
-        const email = emailInput();
-        const password = passwordInput();
+        clearAuthMessage();
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+        if (!email || !password)
+          return showAuthMessage("Fyll inn epost og passord wallah");
 
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email,
-          password,
-        });
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error) return showAuthMessage("Login feilet: " + error.message);
 
-        if (error) return alert(error.message);
-
-        userId = data.user.id;
-        loginOverlay.style.display = "none";
-        main.style.display = "block";
-        loadTracks();
+          currentUser = data.user;
+          if (currentUser) showMainUI();
+          loadTracks();
+          showAuthMessage("Innlogget!", false);
+        } catch (e) {
+          console.error(e);
+          showAuthMessage("Login exception, se console");
+        }
       }
 
       async function logout() {
-        await supabaseClient.auth.signOut();
+        await supabase.auth.signOut();
         location.reload();
       }
 
-      /* ===== DATA ===== */
+      // ---------- DATA ----------
       async function loadTracks() {
-        const { data } = await supabaseClient.from("Tracks").select("*");
+        const { data, error } = await supabase
+          .from("Tracks")
+          .select("*")
+          .order("id", { ascending: true });
+        if (error) return alert("Feil ved henting av baner: " + error.message);
         trackSelect.innerHTML = "";
-
-        data.forEach((t) => {
+        (data || []).forEach((t) => {
           const o = document.createElement("option");
           o.value = t.id;
           o.textContent = t.track_name;
           trackSelect.appendChild(o);
         });
-
         loadTimes();
         loadLeaderboard();
       }
 
       async function saveTime() {
-        const time = Number(timeInput.value);
+        if (!currentUser) return alert("Ikke innlogget");
+        const time = parseFloat(timeInput.value);
         const trackId = Number(trackSelect.value);
+        if (isNaN(time) || !trackId)
+          return alert("Skriv gyldig tid og velg bane");
 
-        await supabaseClient.from("Times").insert({
-          user_id: userId,
-          track_id: trackId,
-          time,
-        });
+        const { data, error } = await supabase.from("Times").insert([
+          {
+            user_id: currentUser.id,
+            track_id: trackId,
+            time: time,
+          },
+        ]);
 
+        if (error) return console.error(error);
         timeInput.value = "";
         loadTimes();
         loadLeaderboard();
       }
 
       async function loadTimes() {
+        if (!currentUser) return;
         const trackId = Number(trackSelect.value);
+        if (!trackId) {
+          timesList.innerHTML = "<li class='list-group-item'>Velg bane</li>";
+          return;
+        }
 
-        const { data } = await supabaseClient
+        const { data, error } = await supabase
           .from("Times")
           .select("*")
-          .eq("user_id", userId)
-          .eq("track_id", trackId);
+          .eq("user_id", currentUser.id)
+          .eq("track_id", trackId)
+          .order("created_at", { ascending: true });
 
         timesList.innerHTML = "";
-        data.forEach((t) => {
+        (data || []).forEach((t, i) => {
           const li = document.createElement("li");
           li.className = "list-group-item";
-          li.textContent = t.time + " sek";
+          li.textContent = `${i + 1}. ${t.time} sek`;
           timesList.appendChild(li);
         });
+        if ((data || []).length === 0)
+          timesList.innerHTML = "<li class='list-group-item'>Ingen tider</li>";
       }
 
       async function loadLeaderboard() {
         const trackId = Number(trackSelect.value);
+        if (!trackId) {
+          leaderboard.innerHTML = "<li class='list-group-item'>Velg bane</li>";
+          return;
+        }
 
-        const { data } = await supabaseClient
+        const { data, error } = await supabase
           .from("Times")
-          .select("time")
+          .select("time, user_id")
           .eq("track_id", trackId)
           .order("time", { ascending: true })
           .limit(5);
 
         leaderboard.innerHTML = "";
-        data.forEach((t, i) => {
+        (data || []).forEach((t, i) => {
           const li = document.createElement("li");
           li.className = "list-group-item";
-          li.textContent = `${i + 1}. ${t.time} sek`;
+          li.textContent = `${i + 1}. ${t.time} sek — bruker: ${t.user_id}`;
           leaderboard.appendChild(li);
         });
+        if ((data || []).length === 0)
+          leaderboard.innerHTML =
+            "<li class='list-group-item'>Ingen tider</li>";
       }
 
-      /* ===== HELPERS ===== */
-      const emailInput = () => document.getElementById("email").value;
-      const passwordInput = () => document.getElementById("password").value;
+      // ---------- UI ----------
+      function showMainUI() {
+        loginOverlay.style.display = "none";
+        main.style.display = "block";
+      }
+
+      btnRegister.addEventListener("click", register);
+      btnLogin.addEventListener("click", login);
+      btnLogout.addEventListener("click", logout);
+      btnSave.addEventListener("click", saveTime);
+      trackSelect.addEventListener("change", () => {
+        loadTimes();
+        loadLeaderboard();
+      });
     </script>
   </body>
 </html>
