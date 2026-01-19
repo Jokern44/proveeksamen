@@ -82,9 +82,27 @@
         <button id="btnLogout" class="btn btn-danger">Logg ut</button>
       </div>
 
-      <!-- Admin: Nytt løp -->
+      <!-- Admin: Ny Grand Prix -->
       <div id="adminSection" class="card p-3 mb-3" style="display: none">
+        <h5>Admin: Ny Grand Prix</h5>
+        <input
+          id="newGPName"
+          class="form-control mb-2"
+          placeholder="Grand Prix navn (f.eks. Sesong 1)"
+        />
+        <textarea
+          id="newGPDesc"
+          class="form-control mb-2"
+          placeholder="Beskrivelse (valgfri)"
+          rows="2"
+        ></textarea>
+        <button id="btnCreateGP" class="btn btn-primary mb-3">Opprett Grand Prix</button>
+        
+        <hr />
         <h5>Admin: Nytt løp</h5>
+        <select id="adminTrackSelect" class="form-select mb-2">
+          <option value="">Velg bane for løpet</option>
+        </select>
         <input
           id="newRaceName"
           class="form-control mb-2"
@@ -99,10 +117,10 @@
         <button id="btnCreateRace" class="btn btn-primary">Opprett løp</button>
       </div>
 
-      <!-- Velg bane og løp -->
+      <!-- Velg Grand Prix og løp -->
       <div class="card p-3 mb-3">
-        <label for="trackSelect">Velg bane</label>
-        <select id="trackSelect" class="form-select mb-2"></select>
+        <label for="gpSelect">Velg Grand Prix</label>
+        <select id="gpSelect" class="form-select mb-2"></select>
         
         <label for="raceSelect">Velg løp</label>
         <select id="raceSelect" class="form-select mb-2"></select>

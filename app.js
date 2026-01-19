@@ -27,7 +27,7 @@
     const btnLogout = document.getElementById("btnLogout");
     const btnSave = document.getElementById("btnSave");
 
-    const trackSelect = document.getElementById("trackSelect");
+    const gpSelect = document.getElementById("gpSelect");
     const raceSelect = document.getElementById("raceSelect");
     const timeInput = document.getElementById("timeInput");
     const fastestLapInput = document.getElementById("fastestLap");
@@ -37,6 +37,10 @@
 
     // Admin elements
     const adminSection = document.getElementById("adminSection");
+    const adminTrackSelect = document.getElementById("adminTrackSelect");
+    const newGPName = document.getElementById("newGPName");
+    const newGPDesc = document.getElementById("newGPDesc");
+    const btnCreateGP = document.getElementById("btnCreateGP");
     const newRaceName = document.getElementById("newRaceName");
     const newRaceDesc = document.getElementById("newRaceDesc");
     const btnCreateRace = document.getElementById("btnCreateRace");
@@ -117,43 +121,46 @@
         if (usernameInput && !emailInput) {
           const { data: userData } = await window.supabaseClient
             .from("Users")
-            .select("email, is_admin")
+            .select("email")
             .eq("username", usernameInput)
             .single();
 
           if (userData) {
             email = userData.email;
-            isAdmin = userData.is_admin || false;
           } else {
             return showMsg("Brukernavn ikke funnet");
           }
-        } else if (emailInput) {
-          // Sjekk admin-status for email
-          const { data: userData } = await window.supabaseClient
-            .from("Users")
-            .select("is_admin")
-            .eq("email", emailInput)
-            .single();
-          isAdmin = userData?.is_admin || false;
         }
 
+        // Logg inn med Supabase Auth
         const { data, error } =
           await window.supabaseClient.auth.signInWithPassword({
             email,
             password,
           });
         if (error) return showMsg("Login feilet: " + error.message);
+
         currentUser = data.user;
         console.log("Logged in user:", currentUser);
         console.log("User metadata:", currentUser?.user_metadata);
+
+        // Sjekk admin-status ETTER vellykket login
+        const { data: userData } = await window.supabaseClient
+          .from("Users")
+          .select("is_admin")
+          .eq("email", currentUser.email)
+          .single();
+
+        isAdmin = userData?.is_admin || false;
         console.log("Is admin:", isAdmin);
 
         if (isAdmin) {
           adminSection.style.display = "block";
+          loadTracksForAdmin();
         }
 
         if (currentUser) showMain();
-        loadTracks();
+        loadGrandPrix();
         showMsg("Innlogget!", false);
         usernameEl.value = "";
         emailEl.value = "";
@@ -169,33 +176,84 @@
       location.reload();
     }
 
-    async function loadTracks() {
+    async function loadTracksForAdmin() {
       const { data, error } = await window.supabaseClient
         .from("Tracks")
         .select("*")
         .order("id", { ascending: true });
-      if (error) return alert("Feil ved henting av baner: " + error.message);
-      trackSelect.innerHTML = '<option value="">Velg bane</option>';
+      if (error) {
+        console.error("Error loading tracks:", error);
+        return;
+      }
+      adminTrackSelect.innerHTML =
+        '<option value="">Velg bane for løpet</option>';
       (data || []).forEach((t) => {
         const o = document.createElement("option");
         o.value = t.id;
         o.textContent = t.track_name;
-        trackSelect.appendChild(o);
+        adminTrackSelect.appendChild(o);
       });
     }
 
+    async function loadGrandPrix() {
+      const { data, error } = await window.supabaseClient
+        .from("GrandPrix")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) {
+        console.error("Error loading Grand Prix:", error);
+        return;
+      }
+      gpSelect.innerHTML = '<option value="">Velg Grand Prix</option>';
+      (data || []).forEach((gp) => {
+        const o = document.createElement("option");
+        o.value = gp.id;
+        o.textContent = gp.name;
+        gpSelect.appendChild(o);
+      });
+    }
+
+    async function createGrandPrix() {
+      const gpName = newGPName.value.trim();
+
+      if (!gpName) {
+        return alert("Skriv Grand Prix navn");
+      }
+
+      const { data, error } = await window.supabaseClient
+        .from("GrandPrix")
+        .insert([
+          {
+            name: gpName,
+            description: newGPDesc.value.trim() || null,
+          },
+        ]);
+
+      if (error) {
+        console.error("Error creating Grand Prix:", error);
+        alert("Feil ved opprettelse: " + error.message);
+        return;
+      }
+
+      newGPName.value = "";
+      newGPDesc.value = "";
+      loadGrandPrix();
+      alert("Grand Prix opprettet!");
+    }
+
     async function loadRaces() {
-      const trackId = Number(trackSelect.value);
-      if (!trackId) {
-        raceSelect.innerHTML = '<option value="">Velg bane først</option>';
+      const gpId = Number(gpSelect.value);
+      if (!gpId) {
+        raceSelect.innerHTML =
+          '<option value="">Velg Grand Prix først</option>';
         raceDescSection.style.display = "none";
         return;
       }
 
       const { data, error } = await window.supabaseClient
         .from("Races")
-        .select("*")
-        .eq("track_id", trackId)
+        .select("*, Tracks(track_name)")
+        .eq("grandprix_id", gpId)
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -207,8 +265,10 @@
       (data || []).forEach((r) => {
         const o = document.createElement("option");
         o.value = r.id;
-        o.textContent = r.race_name;
+        const trackName = r.Tracks?.track_name || "Ukjent bane";
+        o.textContent = `${r.race_name} (${trackName})`;
         o.dataset.description = r.description || "";
+        o.dataset.trackId = r.track_id;
         raceSelect.appendChild(o);
       });
     }
@@ -236,15 +296,17 @@
     }
 
     async function createRace() {
-      const trackId = Number(trackSelect.value);
+      const gpId = Number(gpSelect.value);
+      const trackId = Number(adminTrackSelect.value);
       const raceName = newRaceName.value.trim();
 
-      if (!trackId || !raceName) {
-        return alert("Velg bane og skriv løpsnavn");
+      if (!gpId || !trackId || !raceName) {
+        return alert("Velg Grand Prix, bane og skriv løpsnavn");
       }
 
       const { data, error } = await window.supabaseClient.from("Races").insert([
         {
+          grandprix_id: gpId,
           track_id: trackId,
           race_name: raceName,
           description: newRaceDesc.value.trim() || null,
@@ -259,6 +321,7 @@
 
       newRaceName.value = "";
       newRaceDesc.value = "";
+      adminTrackSelect.value = "";
       loadRaces();
       alert("Løp opprettet!");
     }
@@ -303,6 +366,10 @@
 
       if (!raceId) return alert("Velg løp");
 
+      // Hent track_id fra selected option
+      const selectedOption = raceSelect.options[raceSelect.selectedIndex];
+      const trackId = Number(selectedOption.dataset.trackId);
+
       // Parse rundetid fra format MM:SS.MS til sekund
       const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{2})$/;
       const match = timeInput_value.match(timeRegex);
@@ -339,7 +406,7 @@
         {
           user_id: currentUser.id,
           race_id: raceId,
-          track_id: Number(trackSelect.value),
+          track_id: trackId,
           time: totalSeconds,
           username: username,
           fastest_lap: fastestLap,
@@ -547,11 +614,12 @@
     btnLogin.addEventListener("click", login);
     btnLogout.addEventListener("click", logout);
     btnSave.addEventListener("click", saveTime);
+    btnCreateGP.addEventListener("click", createGrandPrix);
     btnCreateRace.addEventListener("click", createRace);
     btnEditDesc.addEventListener("click", enableDescEdit);
     btnSaveDesc.addEventListener("click", saveDescEdit);
 
-    trackSelect.addEventListener("change", loadRaces);
+    gpSelect.addEventListener("change", loadRaces);
     raceSelect.addEventListener("change", showRaceDescription);
 
     console.log("Event listeners attached");
