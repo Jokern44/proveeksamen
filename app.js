@@ -6,41 +6,13 @@
   }
   window.supabaseInitialized = true;
 
-  const SUPABASE_URL = "https://mvnnwmgkjmhemchiduiq.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY";
-
-  if (typeof window.supabaseClient === "undefined") {
-    window.supabaseClient = null;
-  }
-
-  // Initialiser Supabase direkte når window.supabase er tilgjengelig
-  if (window.supabase) {
-    console.log("Supabase library already loaded, initializing client");
-    window.supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-    console.log("Supabase client initialized:", window.supabaseClient);
-  } else {
-    console.warn("Supabase library not yet available");
-  }
-
   document.addEventListener("DOMContentLoaded", () => {
     console.log("DOMContentLoaded fired");
-    console.log("window.supabaseClient:", window.supabaseClient);
-    console.log("window.supabase:", window.supabase);
+    console.log("window.supabaseClient available:", !!window.supabaseClient);
 
-    // Initialize supabase if not already done
-    if (!window.supabaseClient && window.supabase) {
-      console.log("Initializing Supabase client in DOMContentLoaded");
-      window.supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
-      console.log("Supabase client created:", window.supabaseClient);
-    } else if (!window.supabase) {
-      console.error("window.supabase is still not available!");
+    if (!window.supabaseClient) {
+      console.error("ERROR: window.supabaseClient is not available!");
+      return;
     }
 
     const loginOverlay = document.getElementById("loginOverlay");

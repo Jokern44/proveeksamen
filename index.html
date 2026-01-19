@@ -12,6 +12,18 @@
     <!-- Supabase UMD -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
+    <script>
+      // Initialize Supabase immediately after loading
+      console.log("Inline script: window.supabase =", window.supabase);
+      if (window.supabase) {
+        window.supabaseClient = window.supabase.createClient(
+          "https://mvnnwmgkjmhemchiduiq.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY"
+        );
+        console.log("Supabase client initialized in inline script");
+      }
+    </script>
+
     <style>
       #loginOverlay {
         position: fixed;
