@@ -32,12 +32,18 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     console.log("DOMContentLoaded fired");
+    console.log("window.supabase before wait:", window.supabase);
 
     // Vent på at Supabase lastes
     await waitForSupabase();
-    console.log("Supabase available:", window.supabase);
+    console.log("After waitForSupabase - window.supabase:", window.supabase);
+    console.log("window.supabase type:", typeof window.supabase);
 
     // Initialize supabase only once
+    console.log(
+      "Checking if window.supabaseClient is null:",
+      window.supabaseClient
+    );
     if (!window.supabaseClient) {
       console.log("Creating Supabase client...");
       console.log("SUPABASE_URL:", SUPABASE_URL);
@@ -46,14 +52,13 @@
         SUPABASE_ANON_KEY.substring(0, 20) + "..."
       );
       try {
-        window.supabaseClient = window.supabase.createClient(
+        const client = window.supabase.createClient(
           SUPABASE_URL,
           SUPABASE_ANON_KEY
         );
-        console.log(
-          "Supabase client created successfully:",
-          window.supabaseClient
-        );
+        console.log("Client created:", client);
+        window.supabaseClient = client;
+        console.log("window.supabaseClient is now:", window.supabaseClient);
       } catch (err) {
         console.error("Error creating Supabase client:", err);
       }
