@@ -1,64 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Banetider Supabase</title>
+    <title>Prøve-eksamen</title>
+
+    <!-- Bootstrap bibliotek for lettere tilgang til layout og komponenter -->
+    <!-- Dette gir oss ferdiglagde stiler for knapper, input-felt, kort osv. -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
 
-    <!-- Supabase UMD -->
+    <!-- Supabase JavaScript-bibliotek fra CDN -->
+    <!-- Dette gir oss tilgang til databasen, autentisering og sanntidsoppdateringer -->
+    <!-- Vi bruker UMD-versjonen som fungerer i alle lesere -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
+    <!-- Gjør klar Supabase-klient -->
+    <!-- Denne skripten kjøres før app.js slik at databasen er tilgjengelig når JavaScript-koden kjøres -->
+    <!-- URL: peker til vår Supabase-prosjekt -->
+    <!-- API-nøkkel: gir tilgang til databasen (denne er offentlig, det er ok) -->
     <script>
-      // Initialize Supabase immediately after loading
+      // Initialiserer Supabase med engang biblioteket er lastet inn
       console.log("Inline script: window.supabase =", window.supabase);
       if (window.supabase) {
+        // Opprett en global Supabase-klient som hele appen kan bruke
         window.supabaseClient = window.supabase.createClient(
           "https://mvnnwmgkjmhemchiduiq.supabase.co",
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY"
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12bm53bWdram1oZW1jaGlkdWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyOTg2MzQsImV4cCI6MjA4Mzg3NDYzNH0.OARgOYerC5iNGr0QaR2jx8shdrddUYxc-rXCCU2dFRY",
         );
         console.log("Supabase client initialized in inline script");
       }
     </script>
 
     <style>
+      /* Gjør plass for fast footer ved å legge til padding under */
       body {
         padding-bottom: 48px;
       }
+
+      /* Loginoverlay dekker hele skjermen mens bruker ikke er logget inn */
       #loginOverlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
+        position: fixed; /* Festy på plassen uansett scrolling */
+        inset: 0; /* Fyller helt opp skjermen */
+        background: rgba(0, 0, 0, 0.7); /* Halvgjennomsiktig sort bakgrunn */
+        display: flex; /* Bruk flexbox for sentrering */
+        align-items: center; /* Sentrer vertikalt */
+        justify-content: center; /* Sentrer horisontalt */
+        z-index: 9999; /* Ligget øverst på alle andre elementer */
       }
+
+      /* Loginkortet som vises i senteret av overlayettet */
       #loginCard {
-        width: 360px;
+        width: 360px; /* Stor nok for skjemafeltene */
       }
     </style>
   </head>
   <body>
-    <!-- LOGIN -->
+    <!-- LOGINSKJEMA -->
+    <!-- Dette overlayettet vises når siden først lastes inn -->
+    <!-- Den skjules når brukeren logger inn eller registrerer seg -->
     <div id="loginOverlay">
       <div id="loginCard" class="card p-4">
-        <h4 class="text-center mb-3">Login / Register</h4>
+        <h4 class="text-center mb-3">Logg inn / Registrer deg</h4>
+
+        <!-- Brukernavn - valgfritt for login men påkrevd for registrering -->
         <input
           id="username"
           class="form-control mb-2"
           placeholder="Brukernavn"
           autocomplete="username"
         />
+
+        <!-- E-post - brukes som login-identifikator i Supabase -->
         <input
           id="email"
           class="form-control mb-2"
           placeholder="Epost"
           autocomplete="email"
         />
+
+        <!-- Passord - må minst være 6 tegn i Supabase -->
         <input
           id="password"
           type="password"
@@ -66,10 +89,16 @@
           placeholder="Passord"
           autocomplete="current-password"
         />
+
+        <!-- Knapper for login og registrering -->
         <div class="d-grid gap-2">
-          <button id="btnLogin" class="btn btn-success">Login</button>
-          <button id="btnRegister" class="btn btn-primary">Register</button>
+          <button id="btnLogin" class="btn btn-success">Logg inn</button>
+          <button id="btnRegister" class="btn btn-primary">
+            Registrer deg
+          </button>
         </div>
+
+        <!-- Viser feilmeldinger eller suksessmeldinger fra autentisering -->
         <div
           id="authMsg"
           class="mt-3 text-center text-danger small"
@@ -78,21 +107,28 @@
       </div>
     </div>
 
-    <!-- MAIN -->
+    <!-- HOVEDINNHOLD -->
+    <!-- Dette vises bare når brukeren er logget inn -->
+    <!-- Inneholder sesongvelger, løpsresultater og tidsregistrering -->
     <div class="container mt-5" id="main" style="display: none">
+      <!-- Toppraden med tittel og logut-knapp -->
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>PK X-treme Racers</h2>
         <button id="btnLogout" class="btn btn-danger">Logg ut</button>
       </div>
 
-      <!-- Admin: Ny sesong -->
+      <!-- ADMIN-PANEL -->
+      <!-- Vises bare hvis brukeren er admin -->
+      <!-- Brukes til å opprette nye sesonger og løp -->
       <div id="adminSection" class="card p-3 mb-3" style="display: none">
-        <h5>Admin: Ny sesong</h5>
+        <h5>Admin: Opprett ny sesong</h5>
+        <!-- Input for sesongnavn (f.eks. "Sesong 1") -->
         <input
           id="newGPName"
           class="form-control mb-2"
           placeholder="Sesongnavn (f.eks. Sesong 1)"
         />
+        <!-- Valgfritt tekstfelt for beskrivelse av sesongen -->
         <textarea
           id="newGPDesc"
           class="form-control mb-2"
@@ -104,18 +140,24 @@
         </button>
 
         <hr />
-        <h5>Admin: Nytt løp</h5>
+
+        <!-- ADMIN: Opprett nytt løp innen en sesong -->
+        <h5>Admin: Opprett nytt løp</h5>
+        <!-- Velg hvilken sesong løpet skal tilhøre -->
         <select id="adminSeasonSelect" class="form-select mb-2">
           <option value="">Velg sesong</option>
         </select>
+        <!-- Velg hvilken bane løpet skal kjøres på -->
         <select id="adminTrackSelect" class="form-select mb-2">
           <option value="">Velg bane for løpet</option>
         </select>
+        <!-- Navn på løpet (f.eks. "Løp 1") -->
         <input
           id="newRaceName"
           class="form-control mb-2"
           placeholder="Løpsnavn (f.eks. Løp 1)"
         />
+        <!-- Valgfritt tekstfelt for løpsbeskrivelse -->
         <textarea
           id="newRaceDesc"
           class="form-control mb-2"
@@ -125,23 +167,30 @@
         <button id="btnCreateRace" class="btn btn-primary">Opprett løp</button>
       </div>
 
-      <!-- Velg sesong og løp -->
+      <!-- SESONG- OG LØPSVELGER -->
+      <!-- Alle brukere bruker denne seksjonen til å velge sesong og løp -->
       <div class="card p-3 mb-3">
         <label for="seasonSelect">Velg sesong</label>
+        <!-- Dropdown med alle sesonger hentet fra databasen -->
         <select id="seasonSelect" class="form-select mb-2"></select>
 
         <label for="raceSelect">Velg løp</label>
+        <!-- Dropdown med løp for den valgte sesongen -->
         <select id="raceSelect" class="form-select mb-2"></select>
 
-        <!-- Løpsbeskrivelse -->
+        <!-- LØPSBESKRIVELSE -->
+        <!-- Vises når et løp er valgt -->
         <div id="raceDescSection" style="display: none" class="mt-2">
           <label>Løpsbeskrivelse</label>
+          <!-- Tekstfelt som viser beskrivelsen av valgt løp -->
+          <!-- Skrivebeskyttet for normale brukere, redigerbar for admin -->
           <textarea
             id="raceDesc"
             class="form-control mb-2"
             rows="3"
             readonly
           ></textarea>
+          <!-- Admin-knapper for redigering av beskrivelse -->
           <button
             id="btnEditDesc"
             class="btn btn-sm btn-secondary"
@@ -159,40 +208,58 @@
         </div>
       </div>
 
-      <!-- Registrer tid -->
+      <!-- REGISTRER TID -->
+      <!-- Brukes til å registrere rundetider for valgt løp -->
       <div class="card p-3 mb-3">
         <h5>Registrer rundetid</h5>
         <label for="timeInput">Rundetid</label>
+        <!-- Hjelpetekst som forklarer formatet (MM:SS.MS) -->
         <small class="d-block text-muted mb-2"
           >Format: MM:SS.MS (f.eks. 1:23.45 eller 0:05.32)</small
         >
+        <!-- Input-felt for tidsregistrering -->
+        <!-- Pattern sikrer at formatet er korrekt (regex validering) -->
         <input
           id="timeInput"
           class="form-control mb-2"
           placeholder="MM:SS.MS"
           pattern="^\d{1,2}:\d{2}\.\d{2}$"
         />
+        <!-- Info om at raskeste runde beregnes automatisk -->
         <small class="text-muted">Raskeste runde settes automatisk.</small>
+        <!-- Knapp for å lagre tidsresultatet -->
         <button id="btnSave" class="btn btn-warning">Lagre tid</button>
       </div>
 
-      <!-- Resultater -->
+      <!-- RESULTATER -->
+      <!-- Tre spalter som viser: dine tider, løpsresultat, og sammenlagt sesong -->
       <div class="row">
+        <!-- Venstre spalte: Dine personlige tider for valgt løp -->
         <div class="col-md-4">
           <h5>Dine tider</h5>
+          <!-- Liste over egne registrerte tider med plassering og handicap -->
           <ul id="timesList" class="list-group"></ul>
         </div>
+
+        <!-- Midtre spalte: Alle konkurrenters tider for dette løpet -->
         <div class="col-md-4">
           <h5>Resultat - Dette løpet</h5>
+          <!-- Ledertabell som viser alle deltakere sorter etter tid -->
+          <!-- Viser også handicap, poeng og raskeste rundemarkor -->
           <ul id="leaderboard" class="list-group"></ul>
         </div>
+
+        <!-- Høyre spalte: Sammenlagt poengstilling for hele sesongen -->
         <div class="col-md-4">
           <h5>Sammenlagt (sesong)</h5>
+          <!-- Sesongstilling som viser totalt poeng og total handicap per bruker -->
           <ul id="standings" class="list-group"></ul>
         </div>
       </div>
     </div>
 
+    <!-- Hent inn app.js som inneholder hele applogikken -->
+    <!-- Dette Javascript-filen håndterer: autentisering, databaseforespørsel, beregninger osv. -->
     <script src="app.js"></script>
   </body>
 </html>
